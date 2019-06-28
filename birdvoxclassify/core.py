@@ -8,9 +8,10 @@ import six
 from .birdvoxdetect_exceptions import BirdVoxClassifyError
 
 
-def process_file(filepaths, output_dir, classifier=None, taxonomy=None,
-                 batch_size=512, suffix='', logger_level=logging.INFO,
-                 classifier_name="", custom_objects=None):
+def process_file(filepaths, output_dir=None, output_summary_path=None,
+                 classifier=None, taxonomy=None, batch_size=512, suffix='',
+                 logger_level=logging.INFO, classifier_name="",
+                 custom_objects=None):
     # Set logger level.
     logging.getLogger().setLevel(logger_level)
 
@@ -19,32 +20,12 @@ def process_file(filepaths, output_dir, classifier=None, taxonomy=None,
 
     # Load the classifier.
     if classifier is None:
-        model_path = get_model_path(classifier_name)
-
-        if not os.path.exists(model_path):
-            raise BirdVoxDetectError(
-                'Model "{}" could not be found.'.format(detector_name))
-        try:
-            with warnings.catch_warnings():
-                # Suppress TF and Keras warnings when importing
-                warnings.simplefilter("ignore")
-                import keras
-                classifier = keras.models.load_model(
-                    model_path, custom_objects=custom_objects)
-        except Exception:
-            exc_str = 'Could not open model "{}":\n{}'
-            formatted_trace = traceback.format_exc()
-            exc_formatted_str = exc_str.format(model_path, formatted_trace)
-            raise BirdVoxClassifyError(exc_formatted_str)
+        classifier = load_model(classifier-name, custom_objects=custom_objects)
 
     if taxonomy is None:
         taxonomy_path = get_taxonomy_path(classifier_name)
         with open(taxonomy_path) as f:
             taxonomy = json.load(f)
-
-    # Append underscore to suffix if it is not empty.
-    if len(suffix) > 0 and not suffix[-1] == "_":
-        suffix = suffix + "_"
 
     # Create output_dir if necessary.
     if output_dir is not None:
@@ -56,19 +37,30 @@ def process_file(filepaths, output_dir, classifier=None, taxonomy=None,
 
     batch_gen = batch_generator(filepaths, batch_size=batch_size)
 
+    output_dict = {}
+
     for batch, batch_filepaths in batch_gen:
         batch_pred = predict(batch, classifier, logger_level)
 
         for idx, filepath in enumerate(batch_filepaths):
             pred = [p[idx] for p in batch_pred]
             pred_dict = format_pred(pred, taxonomy)
-            output_path = get_output_path(filepath, suffix, output_dir)
 
-            with open(output_path, 'w') as f:
-                json.dump(pred_dict, f)
+            output_dict[filepath] = pred_dict
+
+            if output_dir:
+                output_path = get_output_path(filepath, suffix + '.json', output_dir)
+                with open(output_path, 'w') as f:
+                    json.dump(pred_dict, f)
 
             # Print final messages.
             logging.info("Done with file: {}.".format(filepath))
+
+    if output_summary_path is not None:
+        with open(output_summary_path, 'w') as f:
+            json.dump(output_dict, f)
+
+    return output_dict
 
 
 def format_pred(pred_list, taxonomy):
@@ -84,6 +76,13 @@ def format_pred(pred_list, taxonomy):
 
         pred_dict[level] = {}
 
+        if pred.ndim == 2:
+            if pred.shape[0] != 1:
+                err_msg = 'Attempted to provide prediction of a batch larger ' \
+                          'than 1. Please use `format_pred_batch`.'
+                raise BirdVoxClassifyError(err_msg)
+            pred = pred.flatten()
+
         for prob, item in zip(pred, encoding_list):
             if len(items['ids']) == 1:
                 ref_id = item['ids'][0]
@@ -91,34 +90,31 @@ def format_pred(pred_list, taxonomy):
                 ref_id = "other"
 
             pred_dict[level][ref_id] = {'probability': y}
-            pred_dict[level][ref_id].update(get_taxonomy_node(ref_id, taxonomy))
+
+            if ref_id != "other":
+                pred_dict[level][ref_id].update(get_taxonomy_node(ref_id, taxonomy))
+            else:
+                pred_dict[level][ref_id].update({
+                    "common_name": "other",
+                    "scientific_name": "other",
+                    "taxonomy_level_names": level,
+                    "taxonomy_level_aliases": {},
+                    "child_ids": item['ids']
+                })
 
     return pred_dict
 
 
-def format_pred_batch(pred_list, taxonomy):
-    if len(pred_list) != len(taxonomy['output_encoding']):
-        err_msg = "Taxonomy expects {} outputs but model produced {} outputs."
-        raise BirdVoxClassifyError(err_msg.format(
-            len(taxonomy['output_encoding']), len(pred_list)
-        ))
+def format_pred_batch(batch_pred_list, taxonomy):
+    for level_pred in batch_pred_list:
+        if len(level_pred) != len(batch_pred_list[0]):
+            err_msg = 'Number of predictions for each level are not consistent.'
+            raise BirdVoxClassifyError(err_msg)
 
     pred_dict_list = []
-
-    for idx in range(pred_list[0].shape[0]):
-        pred_dict = {}
-
-        ex_pred = [pred[idx] for pred in pred_list]
-
-        for pred, (level, encoding_list) in zip(ex_pred, taxonomy['output_encoding'].items()):
-
-            pred_dict[level] = {}
-
-            for prob, item in zip(pred, encoding_list):
-                ref_id = item['ref_id']
-                pred_dict[level][ref_id] = {'probability': y}
-                pred_dict[level][ref_id].update(get_taxonomy_node(ref_id, taxonomy))
-
+    for idx in enumerate(len(batch_pred_list[0])):
+        pred_list = [p[idx] for p in batch_pred_list]
+        pred_dict = format_pred(pred_list, taxonomy)
         pred_dict_list.append(pred_dict)
 
     return pred_dict_list
@@ -130,6 +126,9 @@ def get_taxonomy_node(ref_id, taxonomy):
 
     # Not the most efficient but shouldn't be too bad
     for item in taxonomy['taxonomy']:
+        if "id" not in item:
+            raise BirdVoxClassifyError("Taxonomy node does not contain an id")
+
         if item["id"] == ref_id:
             return item
 
@@ -137,6 +136,13 @@ def get_taxonomy_node(ref_id, taxonomy):
 
 
 def batch_generator(filepath_list, batch_size=512):
+    if batch_size <= 0 or not isinstance(batch_size, int):
+        err_msg = 'Batch size must be a positive integer. Got {}'
+        raise BirdVoxClassifyError(err_msg.format(batch_size))
+
+    if type(filepath_list) != list or len(filepath_list) == 0:
+        raise BirdVoxClassifyError("Must provide non-empty filepath list.")
+
     batch = []
     batch_filepaths = []
     file_count = 0
@@ -178,6 +184,15 @@ def batch_generator(filepath_list, batch_size=512):
 def compute_pcen(audio, sr, input_format=True):
     # Load settings.
     pcen_settings = get_pcen_settings()
+
+    # Standardize type to be float32 [-1, 1]
+    if audio.dtype.kind == 'i':
+        max_val = max(np.iinfo(audio.dtype).max, -np.iinfo(audio.dtype).min)
+        audio = audio.astype('float64') / max_val
+    elif audio.dtype.kind == 'f':
+        audio = audio.astype('float64')
+    else:
+        raise BirdVoxClassifyError('Invalid audio dtype: {}'.format(audio.dtype))
 
     # Map to the range [-2**31, 2**31[
     audio = (audio * (2**31)).astype('float32')
@@ -244,16 +259,22 @@ def compute_pcen(audio, sr, input_format=True):
             right_pad = pad_length - left_pad
             pcen = np.pad(pcen, [(0, 0), (left_pad, right_pad)], mode='constant')
 
+        # Add channel dimension
+        pcen = pcen[:, :, np.newaxis]
+
     # Return.
     return pcen
 
 
-def predict(pcen, classifier, logger_level):
+def predict(pcen, classifier, logger_level=logging.INFO):
     pcen_settings = get_pcen_settings()
 
     # Add batch dimension if we are classifying a single clip
     if pcen.ndim == 3:
         pcen = pcen[np.newaxis, ...]
+    elif pcen.ndim not in (3, 4):
+        err_msg = 'Invalid number of PCEN dimension. Expected 3 or 4, but got {}'
+        raise BirdVoxClassifyError(err_msg.format(pcen.ndim))
 
     if pcen.shape[-1] != pcen_settings['n_hops']:
         err_msg = 'Invalid number of frames in input PCEN. Expected {} but got {}.'
@@ -317,6 +338,28 @@ def get_pcen_settings():
 
 def get_model_path(model_name):
     return os.path.join(os.path.dirname(__file__), "models", model_name + '.h5')
+
+
+def load_model(classifier_name, custom_objects=None):
+    model_path = get_model_path(classifier_name)
+
+    if not os.path.exists(model_path):
+        raise BirdVoxDetectError(
+            'Model "{}" could not be found.'.format(detector_name))
+    try:
+        with warnings.catch_warnings():
+            # Suppress TF and Keras warnings when importing
+            warnings.simplefilter("ignore")
+            import keras
+            model = keras.models.load_model(
+                model_path, custom_objects=custom_objects)
+    except Exception:
+        exc_str = 'Could not open model "{}":\n{}'
+        formatted_trace = traceback.format_exc()
+        exc_formatted_str = exc_str.format(model_path, formatted_trace)
+        raise BirdVoxClassifyError(exc_formatted_str)
+
+    return model
 
 
 def get_taxonomy_path(model_name):
