@@ -1,0 +1,404 @@
+{
+  "taxonomy": [
+    {
+      "id": "1",
+      "common_name": "Passerine",
+      "scientific_name": "Passeriforme",
+      "taxonomy_level_names": "coarse",
+      "taxonomy_level_aliases": {},
+      "child_ids": [
+        "1.4.1",
+        "1.1.1",
+        "1.4.2",
+        "1.4.3",
+        "1.4.4",
+        "1.1.2",
+        "1.4.5",
+        "1.3.1",
+        "1.4.6",
+        "1.4.7",
+        "1.2.1",
+        "1.1.3",
+        "1.3.2",
+        "1.1.4"
+      ]
+    },
+    {
+      "id": "2",
+      "common_name": "Pelecaniforme",
+      "scientific_name": "Pelecaniforme",
+      "taxonomy_level_names": "coarse",
+      "taxonomy_level_aliases": {},
+      "child_ids": [
+        "2.1.1"
+      ]
+    },
+    {
+      "id": "1.1",
+      "common_name": "American sparrow",
+      "scientific_name": "Passerellidae",
+      "taxonomy_level_names": "medium",
+      "taxonomy_level_aliases": {},
+      "child_ids": [
+        "1.1.1",
+        "1.1.2",
+        "1.1.3",
+        "1.1.4"
+      ]
+    },
+    {
+      "id": "1.2",
+      "common_name": "Cardinal",
+      "scientific_name": "Cardinalidae",
+      "taxonomy_level_names": "medium",
+      "taxonomy_level_aliases": {},
+      "child_ids": [
+        "1.2.1"
+      ]
+    },
+    {
+      "id": "1.3",
+      "common_name": "Thrush",
+      "scientific_name": "Turdidae",
+      "taxonomy_level_names": "medium",
+      "taxonomy_level_aliases": {},
+      "child_ids": [
+        "1.3.1",
+        "1.3.2"
+      ]
+    },
+    {
+      "id": "1.4",
+      "common_name": "Warbler",
+      "scientific_name": "Parulidae",
+      "taxonomy_level_names": "medium",
+      "taxonomy_level_aliases": {},
+      "child_ids": [
+        "1.4.1",
+        "1.4.2",
+        "1.4.3",
+        "1.4.4",
+        "1.4.5",
+        "1.4.6",
+        "1.4.7"
+      ]
+    },
+    {
+      "id": "2.1",
+      "common_name": "Heron",
+      "scientific_name": "Ardeidae",
+      "taxonomy_level_names": "medium",
+      "taxonomy_level_aliases": {},
+      "child_ids": [
+        "2.1.1"
+      ]
+    },
+    {
+      "id": "1.4.1",
+      "common_name": "American redstart",
+      "scientific_name": "Setophaga ruticilla",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "AMRE",
+        "species_6letter_code": "SETRUT",
+        "ebird_code": "amered"
+      },
+      "child_ids": []
+    },
+    {
+      "id": "1.1.1",
+      "common_name": "American tree sparrow",
+      "scientific_name": "Spizelloides arborea",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "ATSP",
+        "species_6letter_code": "SPIARB",
+        "ebird_code": "amtspa"
+      },
+      "child_ids": []
+    },
+    {
+      "id": "1.4.2",
+      "common_name": "Bay-breasted warbler",
+      "scientific_name": "Setophaga castanea",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "BBWA",
+        "species_6letter_code": "SETCAS",
+        "ebird_code": "babwar"
+      },
+      "child_ids": []
+    },
+    {
+      "id": "1.4.3",
+      "common_name": "Black-throated blue warbler",
+      "scientific_name": "Setophaga caerulescens",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "BTBW",
+        "species_6letter_code": "SETCAE",
+        "ebird_code": "btbwar"
+      },
+      "child_ids": []
+    },
+    {
+      "id": "1.4.4",
+      "common_name": "Canada warbler",
+      "scientific_name": "Cardellina canadensis",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "CAWA",
+        "species_6letter_code": "CADCAN",
+        "ebird_code": "canwar"
+      },
+      "child_ids": []
+    },
+    {
+      "id": "1.1.2",
+      "common_name": "Chipping sparrow",
+      "scientific_name": "Spizella passerina",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "CHSP",
+        "species_6letter_code": "SPIPAS",
+        "ebird_code": "chispa"
+      },
+      "child_ids": []
+    },
+    {
+      "id": "1.4.5",
+      "common_name": "Common yellowthroat",
+      "scientific_name": "Geothlypis trichas",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "COYE",
+        "species_6letter_code": "GEOTRI",
+        "ebird_code": "comyel"
+      },
+      "child_ids": []
+    },
+    {
+      "id": "1.3.1",
+      "common_name": "Gray-cheeked thrush",
+      "scientific_name": "Catharus minimus",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "GCTH",
+        "species_6letter_code": "CATMIN",
+        "ebird_code": "gycthr"
+      },
+      "child_ids": []
+    },
+    {
+      "id": "2.1.1",
+      "common_name": "Green heron",
+      "scientific_name": "Butorides virescens",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "GRHE",
+        "species_6letter_code": "BUTVIR",
+        "ebird_code": "grnher"
+      },
+      "child_ids": []
+    },
+    {
+      "id": "1.4.6",
+      "common_name": "Mourning warbler",
+      "scientific_name": "Geothlypis philadelphia",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "MOWA",
+        "species_6letter_code": "GEOPHI",
+        "ebird_code": "mouwar"
+      },
+      "child_ids": []
+    },
+    {
+      "id": "1.4.7",
+      "common_name": "Ovenbird",
+      "scientific_name": "Seiurus aurocapilla",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "OVEN",
+        "species_6letter_code": "SEIAUR",
+        "ebird_code": "ovenbi1"
+      },
+      "child_ids": []
+    },
+    {
+      "id": "1.2.1",
+      "common_name": "Rose-breasted grosbeak",
+      "scientific_name": "Pheucticus ludovicianus",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "RBGR",
+        "species_6letter_code": "PHELUD",
+        "ebird_code": "robgro"
+      },
+      "child_ids": []
+    },
+    {
+      "id": "1.1.3",
+      "common_name": "Savannah sparrow",
+      "scientific_name": "Passerculus sandwichensis",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "SAVS",
+        "species_6letter_code": "PASSAN",
+        "ebird_code": "savspa"
+      },
+      "child_ids": []
+    },
+    {
+      "id": "1.3.2",
+      "common_name": "Swainson's thrush",
+      "scientific_name": "Catharus ustulatus",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "SWTH",
+        "species_6letter_code": "CATUST",
+        "ebird_code": "swathr"
+      },
+      "child_ids": []
+    },
+    {
+      "id": "1.1.4",
+      "common_name": "White-throated sparrow",
+      "scientific_name": "Zonotrichia albicollis",
+      "taxonomy_level_names": "fine",
+      "taxonomy_level_aliases": {
+        "species_4letter_code": "WTSP",
+        "species_6letter_code": "ZONALB",
+        "ebird_code": "whtspa"
+      },
+      "child_ids": []
+    }
+  ],
+  "output_encoding": {
+    "coarse": [
+      {
+        "ids": [
+          "1"
+        ]
+      },
+      {
+        "ids": [
+          "0",
+          "2"
+        ]
+      }
+    ],
+    "medium": [
+      {
+        "ids": [
+          "1.1"
+        ]
+      },
+      {
+        "ids": [
+          "1.2"
+        ]
+      },
+      {
+        "ids": [
+          "1.3"
+        ]
+      },
+      {
+        "ids": [
+          "1.4"
+        ]
+      },
+      {
+        "ids": [
+          "0",
+          "2",
+          "1.0"
+        ]
+      }
+    ],
+    "fine": [
+      {
+        "ids": [
+          "1.1.1"
+        ]
+      },
+      {
+        "ids": [
+          "1.1.2"
+        ]
+      },
+      {
+        "ids": [
+          "1.1.3"
+        ]
+      },
+      {
+        "ids": [
+          "1.1.4"
+        ]
+      },
+      {
+        "ids": [
+          "1.2.1"
+        ]
+      },
+      {
+        "ids": [
+          "1.3.1"
+        ]
+      },
+      {
+        "ids": [
+          "1.3.2"
+        ]
+      },
+      {
+        "ids": [
+          "1.4.1"
+        ]
+      },
+      {
+        "ids": [
+          "1.4.2"
+        ]
+      },
+      {
+        "ids": [
+          "1.4.3"
+        ]
+      },
+      {
+        "ids": [
+          "1.4.4"
+        ]
+      },
+      {
+        "ids": [
+          "1.4.5"
+        ]
+      },
+      {
+        "ids": [
+          "1.4.6"
+        ]
+      },
+      {
+        "ids": [
+          "1.4.7"
+        ]
+      },
+      {
+        "ids": [
+          "0",
+          "2",
+          "1.0",
+          "1.1.0",
+          "1.2.0",
+          "1.3.0",
+          "1.4.0"
+        ]
+      }
+    ]
+  }
+}
