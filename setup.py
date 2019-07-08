@@ -11,10 +11,9 @@ except ImportError:
 
 model_dir = os.path.join('birdvoxclassify', 'models')
 suffixes = [
-    'pcen_cnn',
-    'empty'  # for unit tests
+    'flat-multitask_tv1fine-2e7e1bbd434a35b3961e315cfe3832fc',
 ]
-weight_files = ['birdvoxclassify_{}.h5'.format(suffix) for suffix in suffixes]
+weight_files = ['birdvoxclassify-{}.h5'.format(suffix) for suffix in suffixes]
 base_url = 'https://github.com/BirdVox/birdvoxclassify/raw/models/'
 
 if len(sys.argv) > 1 and sys.argv[1] == 'sdist':
@@ -50,13 +49,13 @@ with open('README.md') as file:
 setup(
     name='birdvoxclassify',
     version=version.version,
-    description='Species indentification from bird flight call recordings',
+    description='Species identification from bird flight call recordings',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/BirdVox/birdvoxclassify',
     author='Jason Cramer, Vincent Lostanlen, Justin Salamon, ' +\
         'Andrew Farnsworth, and Juan Pablo Bello',
-    author_email='vincent.lostanlen@nyu.edu',
+    author_email='jtcramer@nyu.edu',
     packages=find_packages(),
     entry_points={
         'console_scripts': ['birdvoxclassify=birdvoxclassify.cli:main'],

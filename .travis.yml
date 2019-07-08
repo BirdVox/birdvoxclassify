@@ -1,0 +1,26 @@
+language: python
+
+notifications:
+    email: false
+
+python:
+    - "3.5"
+    - "3.6"
+    - "3.7"
+
+before_install:
+    - pip install python-coveralls
+    - pip install pytest-faulthandler
+    - pip install pytest-cov
+
+install:
+    - pip install tensorflow pytest
+    - pip install -e .[tests]
+
+script:
+     - while sleep 9m; do echo "=====[ $SECONDS seconds still running ]====="; done &
+     - py.test
+     - kill %1
+
+after_success:
+- coveralls
