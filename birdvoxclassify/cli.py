@@ -14,7 +14,7 @@ from birdvoxclassify.birdvoxclassify_exceptions import BirdVoxClassifyError
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 DEFAULT_MODEL_SUFFIX = "flat-multitask-convnet_" \
-                       "tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc"
+                       "tv1hierarchical-a112ec5506b67d95109894a7dbfd186e"
 DEFAULT_MODEL_NAME = "birdvoxclassify-{}".format(DEFAULT_MODEL_SUFFIX)
 
 

@@ -10,7 +10,7 @@ except ImportError:
 
 model_dir = os.path.join('resources', 'models')
 suffixes = [
-    'flat-multitask-convnet_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc'
+    'flat-multitask-convnet_tv1hierarchical-a112ec5506b67d95109894a7dbfd186e'
 ]
 weight_files = ['birdvoxclassify-{}.h5'.format(suffix) for suffix in suffixes]
 base_url = 'https://github.com/BirdVox/birdvoxclassify/raw/models/'
