@@ -39,8 +39,9 @@ def get_file_list(input_list):
     return file_list
 
 
-def run(inputs, output_dir=None, output_summary_path=None, classifier_name="",
-        batch_size=512, suffix="", logger_level=logging.INFO):
+def run(inputs, output_dir=None, output_summary_path=None,
+        classifier_name=DEFAULT_MODEL_NAME, batch_size=512, suffix="",
+        logger_level=logging.INFO):
     # Set logger level.
     logging.getLogger().setLevel(logger_level)
 
