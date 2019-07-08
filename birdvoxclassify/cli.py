@@ -1,6 +1,5 @@
 from __future__ import print_function
-from argparse import ArgumentParser, RawDescriptionHelpFormatter,\
-    ArgumentTypeError
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from collections import Iterable
 import logging
 import os
@@ -15,7 +14,7 @@ from birdvoxclassify.birdvoxclassify_exceptions import BirdVoxClassifyError
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 DEFAULT_MODEL_SUFFIX = "flat-multitask-convnet_" \
-                       "tv1fine-2e7e1bbd434a35b3961e315cfe3832fc"
+                       "tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc"
 DEFAULT_MODEL_NAME = "birdvoxclassify-{}".format(DEFAULT_MODEL_SUFFIX)
 
 
@@ -23,7 +22,7 @@ def get_file_list(input_list):
     """Parse list of input paths."""
     if not isinstance(input_list, Iterable)\
             or isinstance(input_list, string_types):
-        raise ArgumentTypeError('input_list must be a non-string iterable')
+        raise BirdVoxClassifyError('input_list must be a non-string iterable')
     file_list = []
     for item in input_list:
         if os.path.isfile(item):
@@ -91,37 +90,38 @@ def parse_args(args):
              'a directory of files to process.')
 
     parser.add_argument(
-        '--output-dir', '-o', default=None,
+        '--output-dir', '-o', default=None, dest='output_dir',
         help='Directory to save individual output file(s)')
 
     parser.add_argument(
-        '--summary-output-path', '-O', default=None,
+        '--summary-output-path', '-O', default=None, dest='summary_output_path',
         help='Directory to save individual output file(s)')
 
     parser.add_argument(
         '--classifier-name', '-c', default=DEFAULT_MODEL_NAME,
+        dest='classifier_name',
         help='Name of bird species classifier to be used.')
 
     parser.add_argument(
-        '--batch-size', '-b', type=positive_int, default=512,
+        '--batch-size', '-b', type=positive_int, default=512, dest='batch_size',
         help='Input batch size used by classifier model.'
     )
 
     parser.add_argument(
-        '--suffix', '-s', default="",
+        '--suffix', '-s', default="", dest='suffix'
         help='String to append to the output filenames.'
              'The default value is the empty string.')
 
     parser.add_argument(
-        '--quiet', '-q', action='store_true',
+        '--quiet', '-q', action='store_true', dest='quiet',
         help='Print less messages on screen.')
 
     parser.add_argument(
-        '--verbose', '-v', action='store_true',
+        '--verbose', '-v', action='store_true', dest='verbose',
         help='Print timestamps of classified events.')
 
     parser.add_argument(
-        '--version', '-V', action='store_true',
+        '--version', '-V', action='store_true', dest='version',
         help='Print version number.')
 
     args = parser.parse_args(args)
@@ -167,8 +167,8 @@ def positive_int(value):
     try:
         fvalue = int(value)
     except (ValueError, TypeError) as e:
-        raise ArgumentTypeError(
+        raise BirdVoxClassifyError(
             'Expected a positive int, error message: {}'.format(e))
     if fvalue <= 0:
-        raise ArgumentTypeError('Expected a positive integer')
+        raise BirdVoxClassifyError('Expected a positive integer')
     return fvalue

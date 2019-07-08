@@ -15,7 +15,7 @@ except ImportError:
 TEST_AUDIO_DIR = os.path.join(os.path.dirname(__file__), 'data/audio')
 CHIRP_PATH = os.path.join(TEST_AUDIO_DIR, 'synth_chirp.wav')
 
-MODEL_SUFFIX = "flat-multitask-convnet_tv1fine-2e7e1bbd434a35b3961e315cfe3832fc"
+MODEL_SUFFIX = "flat-multitask-convnet_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc"
 MODEL_NAME = "birdvoxclassify-{}".format(MODEL_SUFFIX)
 
 
@@ -67,7 +67,7 @@ def test_parse_args():
     args = [CHIRP_PATH]
     args = parse_args(args)
     assert args.output_dir is None
-    assert args.summary_output_path is None
+    assert args.output_summary_path is None
     assert args.classifier_name == MODEL_NAME
     assert args.batch_size == 512
     assert args.suffix == ""
@@ -84,7 +84,7 @@ def test_parse_args():
             '-q']
     args = parse_args(args)
     assert args.output_dir == '/tmp/output/dir'
-    assert args.summary_output_path == '/tmp/summary.json'
+    assert args.output_summary_path == '/tmp/summary.json'
     assert args.classifier_name == MODEL_NAME
     assert args.batch_size == 16
     assert args.suffix == 'suffix'

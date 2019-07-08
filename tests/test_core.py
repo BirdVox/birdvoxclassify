@@ -26,8 +26,8 @@ MODELS_DIR = os.path.join(RES_DIR, "models")
 TAXV1_HIERARCHICAL_PATH = os.path.join(TAX_DIR, "tv1hierarchical.json")
 TAXV1_FINE_PATH = os.path.join(TAX_DIR, "tv1fine.json")
 
-MODEL_PREFIX = "flat-multitask_tv1fine-2e7e1bbd434a35b3961e315cfe3832fc"
-MODEL_NAME = "birdvoxclassify-{}".format(MODEL_PREFIX)
+MODEL_SUFFIX = "flat-multitask-convnet_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc"
+MODEL_NAME = "birdvoxclassify-{}".format(MODEL_SUFFIX)
 
 
 def test_process_file():
@@ -253,7 +253,7 @@ def test_get_taxonomy_node():
     assert isinstance(node["common_name"], string_types)
     assert isinstance(node["scientific_name"], string_types)
     assert node["taxonomy_level_names"] == "coarse"
-    assert type(node["taxonomy_leve_aliases"]) == dict
+    assert type(node["taxonomy_level_aliases"]) == dict
     assert type(node["child_ids"]) == list
     assert len(node["child_ids"]) >= 1
 
@@ -270,7 +270,7 @@ def test_get_taxonomy_node():
     assert isinstance(node["common_name"], string_types)
     assert isinstance(node["scientific_name"], string_types)
     assert node["taxonomy_level_names"] == "medium"
-    assert type(node["taxonomy_leve_aliases"]) == dict
+    assert type(node["taxonomy_level_aliases"]) == dict
     assert type(node["child_ids"]) == list
     assert len(node["child_ids"]) >= 1
 
@@ -287,7 +287,7 @@ def test_get_taxonomy_node():
     assert isinstance(node["common_name"], string_types)
     assert isinstance(node["scientific_name"], string_types)
     assert node["taxonomy_level_names"] == "fine"
-    assert type(node["taxonomy_leve_aliases"]) == dict
+    assert type(node["taxonomy_level_aliases"]) == dict
     assert type(node["child_ids"]) == list
     assert len(node["child_ids"]) == 0
 
@@ -301,28 +301,30 @@ def test_batch_generator():
     pcen_settings = get_pcen_settings()
 
     # Test invalid inputs
-    pytest.raises(BirdVoxClassifyError, batch_generator,
-                  ['/invalid/path.wav'], batch_size=512)
-    pytest.raises(BirdVoxClassifyError, batch_generator,
-                  ['/invalid/path.wav'], batch_size=-1)
-    pytest.raises(BirdVoxClassifyError, batch_generator,
-                  ['/invalid/path.wav'], batch_size=512.0)
-    pytest.raises(BirdVoxClassifyError, batch_generator,
-                  [], batch_size=512)
-    pytest.raises(BirdVoxClassifyError, batch_generator,
-                  None, batch_size=512)
+    with pytest.raises(BirdVoxClassifyError) as e:
+        gen = batch_generator(['/invalid/path.wav'], batch_size=512)
+        next(gen)
+    with pytest.raises(BirdVoxClassifyError) as e:
+        gen = batch_generator(['/invalid/path.wav'], batch_size=-1)
+        next(gen)
+    with pytest.raises(BirdVoxClassifyError) as e:
+        gen = batch_generator(['/invalid/path.wav'], batch_size=512.0)
+        next(gen)
+    with pytest.raises(BirdVoxClassifyError) as e:
+        gen = batch_generator([], batch_size=512)
+        next(gen)
 
     gen = batch_generator([CHIRP_PATH]*10, batch_size=10)
     batch = next(gen)
     assert type(batch) == np.ndarray
-    assert batch.shape == (10, pcen_settings['n_hops'],
-                           pcen_settings['n_mels'], 1)
+    assert batch.shape == (10, pcen_settings['n_mels'],
+                           pcen_settings['n_hops'], 1)
 
     gen = batch_generator([CHIRP_PATH], batch_size=10)
     batch = next(gen)
     assert type(batch) == np.ndarray
-    assert batch.shape == (1, pcen_settings['n_hops'],
-                           pcen_settings['n_mels'], 1)
+    assert batch.shape == (1, pcen_settings['n_mels'],
+                           pcen_settings['n_hops'], 1)
 
 
 def test_compute_pcen():
@@ -331,42 +333,42 @@ def test_compute_pcen():
     audio, sr = sf.read(CHIRP_PATH, dtype='float64')
     pcenf64 = compute_pcen(audio, sr)
     assert pcenf64.dtype == np.float32
-    assert pcenf64.shape == (pcen_settings['n_hops'],
-                             pcen_settings['n_mels'], 1)
+    assert pcenf64.shape == (pcen_settings['n_mels'],
+                             pcen_settings['n_hops'], 1)
     pcenf64_r = compute_pcen(audio, sr, input_format=False)
     assert pcenf64_r.dtype == np.float32
     assert pcenf64_r.ndim == 2
-    assert pcenf64_r.shape[1] == pcen_settings['n_mels']
+    assert pcenf64_r.shape[0] == pcen_settings['n_mels']
 
     audio, sr = sf.read(CHIRP_PATH, dtype='float32')
     pcenf32 = compute_pcen(audio, sr)
     assert pcenf32.dtype == np.float32
-    assert pcenf32.shape == (pcen_settings['n_hops'],
-                             pcen_settings['n_mels'], 1)
+    assert pcenf32.shape == (pcen_settings['n_mels'],
+                             pcen_settings['n_hops'], 1)
     pcenf32_r = compute_pcen(audio, sr, input_format=False)
     assert pcenf32_r.dtype == np.float32
     assert pcenf32_r.ndim == 2
-    assert pcenf32_r.shape[1] == pcen_settings['n_mels']
+    assert pcenf32_r.shape[0] == pcen_settings['n_mels']
 
     audio, sr = sf.read(CHIRP_PATH, dtype='int16')
     pceni16 = compute_pcen(audio, sr)
     assert pceni16.dtype == np.float32
-    assert pceni16.shape == (pcen_settings['n_hops'],
-                             pcen_settings['n_mels'], 1)
+    assert pceni16.shape == (pcen_settings['n_mels'],
+                             pcen_settings['n_hops'], 1)
     pceni16_r = compute_pcen(audio, sr, input_format=False)
     assert pceni16_r.dtype == np.float32
     assert pceni16_r.ndim == 2
-    assert pceni16_r.shape[1] == pcen_settings['n_mels']
+    assert pceni16_r.shape[0] == pcen_settings['n_mels']
 
     audio, sr = sf.read(CHIRP_PATH, dtype='int32')
     pceni32 = compute_pcen(audio, sr)
     assert pceni32.dtype == np.float32
-    assert pceni32.shape == (pcen_settings['n_hops'],
-                             pcen_settings['n_mels'], 1)
+    assert pceni32.shape == (pcen_settings['n_mels'],
+                             pcen_settings['n_hops'], 1)
     pceni32_r = compute_pcen(audio, sr, input_format=False)
     assert pceni32_r.dtype == np.float32
     assert pceni32_r.ndim == 2
-    assert pceni32_r.shape[1] == pcen_settings['n_mels']
+    assert pceni32_r.shape[0] == pcen_settings['n_mels']
 
     # Make sure PCEN values are similar for different input representations
     assert np.allclose(pcenf64, pcenf32, rtol=1e-5, atol=1e-5)
@@ -420,7 +422,7 @@ def test_get_output_path():
     assert output_path == exp_output_path
 
     exp_output_path = '/output/dir/test_suffix.npz'
-    output_path = get_output_path(filepath, "suffix_.npz", output_dir)
+    output_path = get_output_path(filepath, "suffix.npz", output_dir)
     assert output_path == exp_output_path
 
 
@@ -492,7 +494,7 @@ def test_get_model_path():
     test_model_name = "test_model_name"
     exp_model_path = os.path.join(MODULE_DIR, "models", test_model_name + '.h5')
     model_path = get_model_path(test_model_name)
-    assert model_path == exp_model_path
+    assert os.path.abspath(model_path) == os.path.abspath(exp_model_path)
 
 
 def test_load_model():
