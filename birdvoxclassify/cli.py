@@ -94,7 +94,7 @@ def parse_args(args):
         help='Directory to save individual output file(s)')
 
     parser.add_argument(
-        '--summary-output-path', '-O', default=None, dest='summary_output_path',
+        '--output-summary-path', '-O', default=None, dest='output_summary_path',
         help='Directory to save individual output file(s)')
 
     parser.add_argument(
