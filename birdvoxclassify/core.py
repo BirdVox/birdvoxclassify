@@ -389,7 +389,7 @@ def get_taxonomy_path(model_name):
                             "..",
                             "resources",
                             "taxonomy",
-                            taxonomy_version + '.yaml'))
+                            taxonomy_version + '.json'))
 
     # Verify the MD5 checksum
     hash_md5 = hashlib.md5()

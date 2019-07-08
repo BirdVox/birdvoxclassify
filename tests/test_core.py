@@ -523,7 +523,7 @@ def test_get_taxonomy_path():
     hash_md5.update(test_content.encode())
 
     exp_md5sum = hash_md5.hexdigest()
-    exp_taxonomy_path = os.path.join(TAX_DIR, taxonomy_version + ".yaml")
+    exp_taxonomy_path = os.path.join(TAX_DIR, taxonomy_version + ".json")
     with open(exp_taxonomy_path, 'w') as f:
         f.write(test_content)
 
