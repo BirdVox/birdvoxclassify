@@ -15,7 +15,7 @@ except ImportError:
 TEST_AUDIO_DIR = os.path.join(os.path.dirname(__file__), 'data/audio')
 CHIRP_PATH = os.path.join(TEST_AUDIO_DIR, 'synth_chirp.wav')
 
-MODEL_SUFFIX = "flat-multitask_tv1fine-2e7e1bbd434a35b3961e315cfe3832fc"
+MODEL_SUFFIX = "flat-multitask-convnet_tv1fine-2e7e1bbd434a35b3961e315cfe3832fc"
 MODEL_NAME = "birdvoxclassify-{}".format(MODEL_SUFFIX)
 
 

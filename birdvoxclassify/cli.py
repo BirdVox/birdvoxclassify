@@ -14,7 +14,8 @@ from birdvoxclassify.birdvoxclassify_exceptions import BirdVoxClassifyError
 # The following line circumvent issue #1715 in xgboost
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-DEFAULT_MODEL_SUFFIX = "flat-multitask_tv1fine-2e7e1bbd434a35b3961e315cfe3832fc"
+DEFAULT_MODEL_SUFFIX = "flat-multitask-convnet_" \
+                       "tv1fine-2e7e1bbd434a35b3961e315cfe3832fc"
 DEFAULT_MODEL_NAME = "birdvoxclassify-{}".format(DEFAULT_MODEL_SUFFIX)
 
 
