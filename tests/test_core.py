@@ -77,7 +77,7 @@ def test_process_file():
             assert type(v) == dict
         with open(test_output_path, 'r') as f:
             f_output = json.load(f)
-        assert next(output.values()) == f_output
+        assert next(iter(output.values())) == f_output
 
         # Test output dir with suffix
         output = process_file([CHIRP_PATH], output_dir=test_output_dir,
@@ -89,7 +89,7 @@ def test_process_file():
             assert type(v) == dict
         with open(suffix_test_output_path, 'r') as f:
             f_output = json.load(f)
-        assert next(output.values()) == f_output
+        assert next(iter(output.values())) == f_output
 
         # Test output summary file
         output = process_file([CHIRP_PATH],
