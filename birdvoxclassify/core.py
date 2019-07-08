@@ -18,7 +18,7 @@ DEFAULT_MODEL_NAME = "birdvoxclassify-{}".format(DEFAULT_MODEL_SUFFIX)
 
 def process_file(filepaths, output_dir=None, output_summary_path=None,
                  classifier=None, taxonomy=None, batch_size=512, suffix='',
-                 logger_level=logging.INFO, classifier_name="",
+                 logger_level=logging.INFO, classifier_name=DEFAULT_MODEL_NAME,
                  custom_objects=None):
     # Set logger level.
     logging.getLogger().setLevel(logger_level)
