@@ -33,7 +33,7 @@ MODEL_NAME = "birdvoxclassify-{}".format(MODEL_SUFFIX)
 def test_process_file():
     test_output_dir = tempfile.mkdtemp()
     model = load_model(MODEL_NAME)
-    with open(TAXV1_FINE_PATH) as f:
+    with open(TAXV1_HIERARCHICAL_PATH) as f:
         taxonomy = json.load(f)
     test_output_summary_path = os.path.join(test_output_dir, "summary.json")
     test_output_path = get_output_path(CHIRP_PATH, '.json',
@@ -138,7 +138,7 @@ def test_format_pred():
     with open(TAXV1_FINE_PATH) as f:
         taxonomy = json.load(f)
 
-    pred = np.random.random((14,))
+    pred = np.random.random((15,))
     pred /= pred.sum()
     pred_list = [pred]
 
@@ -188,7 +188,7 @@ def test_format_pred_batch():
     with open(TAXV1_FINE_PATH) as f:
         taxonomy = json.load(f)
 
-    pred = np.random.random((14,))
+    pred = np.random.random((15,))
     pred /= pred.sum()
 
     output_ids = [
@@ -396,7 +396,7 @@ def test_predict():
     assert type(pred) == list
     assert pred[0].shape == (10, 1)
     assert pred[1].shape == (10, 5)
-    assert pred[2].shape == (10, 14)
+    assert pred[2].shape == (10, 15)
 
     # Test invalid inputs
     inv_pcen = compute_pcen(audio, sr, input_format=False)[..., np.newaxis]
