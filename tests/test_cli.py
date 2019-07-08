@@ -142,7 +142,7 @@ def test_run(capsys):
 
     # test empty input folder
     with pytest.raises(SystemExit) as pytest_wrapped_e:
-        tempdir = tempfile.mkdtemp()
+        tempdir = os.path.abspath(tempfile.mkdtemp())
         run([tempdir])
     shutil.rmtree(tempdir)
 

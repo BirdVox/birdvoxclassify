@@ -172,7 +172,7 @@ def batch_generator(filepath_list, batch_size=512):
             exc_formatted_str = exc_str.format(filepath, traceback.format_exc())
             raise BirdVoxClassifyError(exc_formatted_str)
 
-        pcen = compute_pcen(audio, sr, input_format=True)
+        pcen = compute_pcen(audio, sr, input_format=True)[np.newaxis, ...]
 
         batch.append(pcen)
         batch_filepaths.append(filepath)
@@ -350,7 +350,13 @@ def get_pcen_settings():
 
 
 def get_model_path(model_name):
-    return os.path.join(os.path.dirname(__file__), "models", model_name + '.h5')
+    path = os.path.join(os.path.dirname(__file__),
+                        "..",
+                        "resources",
+                        "models",
+                        model_name + '.h5')
+    # Use abspath to get rid of the relative path
+    return os.path.abspath(path)
 
 
 def load_model(classifier_name, custom_objects=None):
@@ -377,8 +383,13 @@ def load_model(classifier_name, custom_objects=None):
 
 def get_taxonomy_path(model_name):
     taxonomy_version, exp_md5sum = model_name.split('_')[1].split('-')
-    taxonomy_path = os.path.join(os.path.dirname(__file__), "taxonomies",
-                                 taxonomy_version + '.yaml')
+    taxonomy_path = os.path.abspath(
+                        os.path.join(
+                            os.path.dirname(__file__),
+                            "..",
+                            "resources",
+                            "taxonomy",
+                            taxonomy_version + '.yaml'))
 
     # Verify the MD5 checksum
     hash_md5 = hashlib.md5()

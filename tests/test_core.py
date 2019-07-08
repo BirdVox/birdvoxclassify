@@ -293,8 +293,11 @@ def test_get_taxonomy_node():
 
     # Check for invalid inputs
     pytest.raises(BirdVoxClassifyError, get_taxonomy_node, "0", taxonomy)
-    pytest.raises(BirdVoxClassifyError, get_taxonomy_node, "1", [])
-    pytest.raises(BirdVoxClassifyError, get_taxonomy_node, "1", [{}])
+    pytest.raises(TypeError, get_taxonomy_node, "1", [])
+    pytest.raises(BirdVoxClassifyError, get_taxonomy_node, "1",
+                  {'taxonomy': []})
+    pytest.raises(BirdVoxClassifyError, get_taxonomy_node, "1",
+                  {'taxonomy': [{}]})
 
 
 def test_batch_generator():
@@ -317,13 +320,13 @@ def test_batch_generator():
     gen = batch_generator([CHIRP_PATH]*10, batch_size=10)
     batch = next(gen)
     assert type(batch) == np.ndarray
-    assert batch.shape == (10, pcen_settings['n_mels'],
+    assert batch.shape == (10, pcen_settings['top_freq_id'],
                            pcen_settings['n_hops'], 1)
 
     gen = batch_generator([CHIRP_PATH], batch_size=10)
     batch = next(gen)
     assert type(batch) == np.ndarray
-    assert batch.shape == (1, pcen_settings['n_mels'],
+    assert batch.shape == (1, pcen_settings['top_freq_id'],
                            pcen_settings['n_hops'], 1)
 
 
@@ -333,42 +336,42 @@ def test_compute_pcen():
     audio, sr = sf.read(CHIRP_PATH, dtype='float64')
     pcenf64 = compute_pcen(audio, sr)
     assert pcenf64.dtype == np.float32
-    assert pcenf64.shape == (pcen_settings['n_mels'],
+    assert pcenf64.shape == (pcen_settings['top_freq_id'],
                              pcen_settings['n_hops'], 1)
     pcenf64_r = compute_pcen(audio, sr, input_format=False)
     assert pcenf64_r.dtype == np.float32
     assert pcenf64_r.ndim == 2
-    assert pcenf64_r.shape[0] == pcen_settings['n_mels']
+    assert pcenf64_r.shape[0] == pcen_settings['top_freq_id']
 
     audio, sr = sf.read(CHIRP_PATH, dtype='float32')
     pcenf32 = compute_pcen(audio, sr)
     assert pcenf32.dtype == np.float32
-    assert pcenf32.shape == (pcen_settings['n_mels'],
+    assert pcenf32.shape == (pcen_settings['top_freq_id'],
                              pcen_settings['n_hops'], 1)
     pcenf32_r = compute_pcen(audio, sr, input_format=False)
     assert pcenf32_r.dtype == np.float32
     assert pcenf32_r.ndim == 2
-    assert pcenf32_r.shape[0] == pcen_settings['n_mels']
+    assert pcenf32_r.shape[0] == pcen_settings['top_freq_id']
 
     audio, sr = sf.read(CHIRP_PATH, dtype='int16')
     pceni16 = compute_pcen(audio, sr)
     assert pceni16.dtype == np.float32
-    assert pceni16.shape == (pcen_settings['n_mels'],
+    assert pceni16.shape == (pcen_settings['top_freq_id'],
                              pcen_settings['n_hops'], 1)
     pceni16_r = compute_pcen(audio, sr, input_format=False)
     assert pceni16_r.dtype == np.float32
     assert pceni16_r.ndim == 2
-    assert pceni16_r.shape[0] == pcen_settings['n_mels']
+    assert pceni16_r.shape[0] == pcen_settings['top_freq_id']
 
     audio, sr = sf.read(CHIRP_PATH, dtype='int32')
     pceni32 = compute_pcen(audio, sr)
     assert pceni32.dtype == np.float32
-    assert pceni32.shape == (pcen_settings['n_mels'],
+    assert pceni32.shape == (pcen_settings['top_freq_id'],
                              pcen_settings['n_hops'], 1)
     pceni32_r = compute_pcen(audio, sr, input_format=False)
     assert pceni32_r.dtype == np.float32
     assert pceni32_r.ndim == 2
-    assert pceni32_r.shape[0] == pcen_settings['n_mels']
+    assert pceni32_r.shape[0] == pcen_settings['top_freq_id']
 
     # Make sure PCEN values are similar for different input representations
     assert np.allclose(pcenf64, pcenf32, rtol=1e-5, atol=1e-5)
@@ -513,8 +516,6 @@ def test_load_model():
 
 
 def test_get_taxonomy_path():
-    taxonomy_dir = os.path.join(MODULE_DIR, "taxonomies")
-
     # Make sure that the correct taxonomy path is returned
     taxonomy_version = "v1234"
     test_content = 'hello world!'
@@ -522,7 +523,7 @@ def test_get_taxonomy_path():
     hash_md5.update(test_content.encode())
 
     exp_md5sum = hash_md5.hexdigest()
-    exp_taxonomy_path = os.path.join(taxonomy_dir, taxonomy_version + ".yaml")
+    exp_taxonomy_path = os.path.join(TAX_DIR, taxonomy_version + ".yaml")
     with open(exp_taxonomy_path, 'w') as f:
         f.write(test_content)
 
@@ -532,7 +533,7 @@ def test_get_taxonomy_path():
     finally:
         os.remove(exp_taxonomy_path)
 
-    assert taxonomy_path == exp_taxonomy_path
+    assert os.path.abspath(taxonomy_path) == os.path.abspath(exp_taxonomy_path)
 
     # Make sure that an error is raised when md5sum doesn't match
     hash_md5 = hashlib.md5()

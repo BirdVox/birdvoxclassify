@@ -8,9 +8,9 @@ try:
 except ImportError:
     from urllib import urlretrieve
 
-model_dir = os.path.join('birdvoxclassify', 'models')
+model_dir = os.path.join('resources', 'models')
 suffixes = [
-    'flat-multitask-convnet_tv1fine-2e7e1bbd434a35b3961e315cfe3832fc',
+    'flat-multitask-convnet_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc'
 ]
 weight_files = ['birdvoxclassify-{}.h5'.format(suffix) for suffix in suffixes]
 base_url = 'https://github.com/BirdVox/birdvoxclassify/raw/models/'
