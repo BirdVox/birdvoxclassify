@@ -8,6 +8,7 @@ import hashlib
 import keras
 import logging
 import shutil
+import pathlib
 from scipy.signal.windows import get_window
 from six import string_types
 from numbers import Real
@@ -132,6 +133,19 @@ def test_process_file():
         for k, v in output.items():
             assert isinstance(k, string_types)
             assert type(v) == dict
+
+        # Make sure we create the output dir if it doesn't exist
+        shutil.rmtree(test_output_dir)
+        output = process_file([CHIRP_PATH], output_dir=test_output_dir,
+                              classifier=model)
+        assert type(output) == dict
+        assert len(output) == 1
+        for k, v in output.items():
+            assert isinstance(k, string_types)
+            assert type(v) == dict
+        with open(test_output_path, 'r') as f:
+            f_output = json.load(f)
+        assert next(iter(output.values())) == f_output
     finally:
         shutil.rmtree(test_output_dir)
         shutil.rmtree(test_audio_dir)
@@ -194,8 +208,38 @@ def test_format_pred():
         assert np.isclose(output['fine'][ref_id]["probability"],
                           exp_output['fine'][ref_id]["probability"])
 
+    # Test when we have a batch dimension of 1
+    pred = np.random.random((1, 15))
+    pred /= pred.sum()
+    pred_list = [pred]
+
+    output = format_pred(pred_list, taxonomy)
+    for ref_id in output_ids:
+        assert output['fine'][ref_id]["common_name"] \
+               == exp_output['fine'][ref_id]["common_name"]
+        assert output['fine'][ref_id]["scientific_name"] \
+               == exp_output['fine'][ref_id]["scientific_name"]
+        assert output['fine'][ref_id]["taxonomy_level_names"] \
+               == exp_output['fine'][ref_id]["taxonomy_level_names"]
+        assert output['fine'][ref_id]["taxonomy_level_aliases"] \
+               == exp_output['fine'][ref_id]["taxonomy_level_aliases"]
+        assert output['fine'][ref_id]["child_ids"] \
+               == exp_output['fine'][ref_id]["child_ids"]
+        assert np.isclose(output['fine'][ref_id]["probability"],
+                          exp_output['fine'][ref_id]["probability"])
+
+    # Make sure we fail when batch dimension is greater than 1
+    pred = np.random.random((5, 15))
+    pred /= pred.sum()
+    pred_list = [pred]
+    pytest.raises(BirdVoxClassifyError, format_pred, pred_list, taxonomy)
+
+    # Make sure we fail with wrong taxonomy
     with open(TAXV1_HIERARCHICAL_PATH) as f:
         taxonomy = json.load(f)
+    pred = np.random.random((15,))
+    pred /= pred.sum()
+    pred_list = [pred]
     pytest.raises(BirdVoxClassifyError, format_pred, pred_list, taxonomy)
 
 
@@ -320,6 +364,10 @@ def test_get_taxonomy_node():
     assert type(node["child_ids"]) == list
     assert len(node["child_ids"]) == 0
 
+    ref_id = "other"
+    node = get_taxonomy_node(ref_id, taxonomy)
+    assert node == {"id": "other"}
+
     # Check for invalid inputs
     pytest.raises(BirdVoxClassifyError, get_taxonomy_node, "0", taxonomy)
     pytest.raises(TypeError, get_taxonomy_node, "1", [])
@@ -345,6 +393,17 @@ def test_batch_generator():
     with pytest.raises(BirdVoxClassifyError) as e:
         gen = batch_generator([], batch_size=512)
         next(gen)
+
+    # Test empty file
+    empty_path = 'empty.wav'
+    pathlib.Path(empty_path).touch()
+
+    try:
+        with pytest.raises(BirdVoxClassifyError) as e:
+            gen = batch_generator([empty_path], batch_size=512)
+            next(gen)
+    finally:
+        os.remove(empty_path)
 
     gen = batch_generator([CHIRP_PATH]*10, batch_size=10)
     batch, batch_filepaths = next(gen)
@@ -408,6 +467,13 @@ def test_compute_pcen():
     assert np.allclose(pcenf64, pcenf32, rtol=1e-5, atol=1e-5)
     assert np.allclose(pcenf64, pceni16, rtol=1e-5, atol=1e-5)
     assert np.allclose(pcenf64, pceni32, rtol=1e-5, atol=1e-5)
+
+    # Make sure that padding is handled with short audio
+    short_audio = np.random.random((10,))
+    short_pcen = compute_pcen(short_audio, sr)
+    assert short_pcen.dtype == np.float32
+    assert short_pcen.shape == (pcen_settings['top_freq_id'],
+                                pcen_settings['n_hops'], 1)
 
     # Make sure unsigned ints raise an error
     pytest.raises(BirdVoxClassifyError, compute_pcen,
@@ -551,6 +617,8 @@ def test_load_model():
         pytest.raises(BirdVoxClassifyError, load_model, "invalid-classifier")
     finally:
         os.remove(invalid_path)
+
+    pytest.raises(BirdVoxClassifyError, load_model, "/invalid/path")
 
 
 def test_get_taxonomy_path():

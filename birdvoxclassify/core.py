@@ -134,7 +134,7 @@ def format_pred_batch(batch_pred_list, taxonomy):
 
 def get_taxonomy_node(ref_id, taxonomy):
     if ref_id == 'other':
-        return {}
+        return {"id": "other"}
 
     # Not the most efficient but shouldn't be too bad
     for item in taxonomy['taxonomy']:

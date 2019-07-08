@@ -4,6 +4,7 @@ import tempfile
 import shutil
 from birdvoxclassify.cli import (get_file_list, run, parse_args,
                                  main, positive_int)
+from birdvoxclassify.version import version
 from birdvoxclassify.birdvoxclassify_exceptions import BirdVoxClassifyError
 try:
     # python 3.4+ should use builtin unittest.mock not mock package
@@ -120,18 +121,66 @@ def test_positive_int():
         pytest.raises(BirdVoxClassifyError, positive_int, i)
 
 
-def test_main():
+def test_main(capsys):
     tempdir = tempfile.mkdtemp()
+
     arg_list = ['birdvoxclassify',
                 CHIRP_PATH,
                 '--output-dir', tempdir]
     with patch('sys.argv', arg_list):
         main()
-
     # Check output file created
     outfile = os.path.join(tempdir, 'synth_chirp.json')
     assert os.path.isfile(outfile)
+
+    arg_list = ['birdvoxclassify',
+                CHIRP_PATH,
+                '-v'
+                '--output-dir', tempdir]
+    with patch('sys.argv', arg_list):
+        main()
+    # Check output file created
+    outfile = os.path.join(tempdir, 'synth_chirp.json')
+    assert os.path.isfile(outfile)
+
+    arg_list = ['birdvoxclassify',
+                CHIRP_PATH,
+                '-q'
+                '--output-dir', tempdir]
+    with patch('sys.argv', arg_list):
+        main()
+    # Check output file created
+    outfile = os.path.join(tempdir, 'synth_chirp.json')
+    assert os.path.isfile(outfile)
+
+    arg_list = ['birdvoxclassify']
+    with patch('sys.argv', arg_list):
+        main()
+    captured = capsys.readouterr()
+    expected_message = 'BirdVoxClassify\n'
+    assert captured.out == expected_message
+
+    arg_list = ['birdvoxclassify', '-V']
+    with patch('sys.argv', arg_list):
+        main()
+    captured = capsys.readouterr()
+    assert captured.out == (version + '\n')
+
     shutil.rmtree(tempdir)
+
+
+def test_script_main():
+    # Duplicate regression test from test_run just to hit coverage
+    tempdir = tempfile.mkdtemp()
+    arg_list = ['birdvoxclassify',
+                CHIRP_PATH,
+                '--output-dir', tempdir]
+    with patch('sys.argv', arg_list):
+        import birdvoxclassify.__main__
+
+    # check output file created
+    outfile = os.path.join(tempdir, 'synth_chirp.json')
+    assert os.path.isfile(outfile)
 
 
 def test_run(capsys):
@@ -162,6 +211,14 @@ def test_run(capsys):
     tempdir = tempfile.mkdtemp()
     run(string_input, output_dir=tempdir)
     outfile = os.path.join(tempdir, 'synth_chirp.json')
+    assert os.path.exists(outfile)
+    shutil.rmtree(tempdir)
+
+    # test suffix
+    string_input = CHIRP_PATH
+    tempdir = tempfile.mkdtemp()
+    run(string_input, output_dir=tempdir, suffix="suffix")
+    outfile = os.path.join(tempdir, 'synth_chirp_suffix.json')
     assert os.path.exists(outfile)
     shutil.rmtree(tempdir)
 

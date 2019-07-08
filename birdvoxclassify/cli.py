@@ -139,7 +139,7 @@ def main():
     """
     args = parse_args(sys.argv[1:])
 
-    if args.version == "-V" or args.version == "--version":
+    if args.version:
         print(birdvoxclassify.version.version)
     elif not args.inputs:
         print("BirdVoxClassify")
