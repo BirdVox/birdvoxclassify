@@ -288,13 +288,26 @@ def predict(pcen, classifier, logger_level=logging.INFO):
                   'Expected 3 or 4, but got {}'
         raise BirdVoxClassifyError(err_msg.format(pcen.ndim))
 
-    if pcen.shape[-1] != pcen_settings['n_hops']:
+    if pcen.shape[1] != pcen_settings['top_freq_id']:
+        err_msg = 'Invalid number of mel-frequency bins in input PCEN. ' \
+                  'Expected {} but got {}.'
+        raise BirdVoxClassifyError(err_msg.format(
+            pcen_settings['top_freq_id'],
+            pcen.shape[1]
+        ))
+
+    if pcen.shape[2] != pcen_settings['n_hops']:
         err_msg = 'Invalid number of frames in input PCEN. ' \
                   'Expected {} but got {}.'
         raise BirdVoxClassifyError(err_msg.format(
-            pcen.shape[-1],
-            pcen_settings['n_hops']
+            pcen_settings['n_hops'],
+            pcen.shape[2]
         ))
+
+    if pcen.shape[3] != 1:
+        err_msg = 'Invalid number of channels in input PCEN. ' \
+                  'Expected 1 but got {}.'
+        raise BirdVoxClassifyError(err_msg.format(pcen.shape[3]))
 
     # Predict
     verbose = (logger_level < 15)

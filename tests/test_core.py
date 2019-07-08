@@ -177,7 +177,19 @@ def test_format_pred():
         exp_output['fine'][ref_id].update(node)
 
     output = format_pred(pred_list, taxonomy)
-    assert exp_output == output
+    for ref_id in output_ids:
+        assert output['fine'][ref_id]["common_name"] \
+            == exp_output['fine'][ref_id]["common_name"]
+        assert output['fine'][ref_id]["scientific_name"] \
+            == exp_output['fine'][ref_id]["scientific_name"]
+        assert output['fine'][ref_id]["taxonomy_level_names"] \
+            == exp_output['fine'][ref_id]["taxonomy_level_names"]
+        assert output['fine'][ref_id]["taxonomy_level_aliases"] \
+            == exp_output['fine'][ref_id]["taxonomy_level_aliases"]
+        assert output['fine'][ref_id]["child_ids"] \
+            == exp_output['fine'][ref_id]["child_ids"]
+        assert np.isclose(output['fine'][ref_id]["probability"],
+                          exp_output['fine'][ref_id]["probability"])
 
     with open(TAXV1_HIERARCHICAL_PATH) as f:
         taxonomy = json.load(f)
@@ -192,20 +204,20 @@ def test_format_pred_batch():
     pred /= pred.sum()
 
     output_ids = [
-        "1.1.1",
-        "1.1.2",
-        "1.1.3",
-        "1.1.4",
-        "1.2.1",
-        "1.3.1",
-        "1.3.2",
         "1.4.1",
+        "1.1.1",
         "1.4.2",
         "1.4.3",
         "1.4.4",
+        "1.1.2",
         "1.4.5",
+        "1.3.1",
         "1.4.6",
         "1.4.7",
+        "1.2.1",
+        "1.1.3",
+        "1.3.2",
+        "1.1.4",
         "other"
     ]
 
@@ -226,11 +238,25 @@ def test_format_pred_batch():
         exp_output['fine'][ref_id].update(node)
 
     batch_pred_list = [np.tile(pred, (10, 1))]
-    exp_output = [exp_output] * 10
+    exp_output_batch = [exp_output] * 10
 
-    output = format_pred_batch(batch_pred_list=batch_pred_list,
+    output_batch = format_pred_batch(batch_pred_list=batch_pred_list,
                                taxonomy=taxonomy)
-    assert exp_output == output
+    for idx, output in enumerate(output_batch):
+        for ref_id in output_ids:
+            exp_output = exp_output_batch[idx]
+            assert output['fine'][ref_id]["common_name"] \
+                == exp_output['fine'][ref_id]["common_name"]
+            assert output['fine'][ref_id]["scientific_name"] \
+                == exp_output['fine'][ref_id]["scientific_name"]
+            assert output['fine'][ref_id]["taxonomy_level_names"] \
+                == exp_output['fine'][ref_id]["taxonomy_level_names"]
+            assert output['fine'][ref_id]["taxonomy_level_aliases"] \
+                == exp_output['fine'][ref_id]["taxonomy_level_aliases"]
+            assert output['fine'][ref_id]["child_ids"] \
+                == exp_output['fine'][ref_id]["child_ids"]
+            assert np.isclose(output['fine'][ref_id]["probability"],
+                              exp_output['fine'][ref_id]["probability"])
 
     pytest.raises(BirdVoxClassifyError, format_pred_batch,
                   [np.tile(pred, (10, 1)), np.tile(pred, (5, 1))], taxonomy)
@@ -379,7 +405,8 @@ def test_compute_pcen():
     assert np.allclose(pcenf64, pceni32, rtol=1e-5, atol=1e-5)
 
     # Make sure unsigned ints raise an error
-    pytest.raises(compute_pcen, audio.astype('uint32'), sr)
+    pytest.raises(BirdVoxClassifyError, compute_pcen,
+                  audio.astype('uint32'), sr)
 
 
 def test_predict():
@@ -406,6 +433,12 @@ def test_predict():
     pytest.raises(BirdVoxClassifyError, predict, inv_pcen, model, logging.INFO)
     pytest.raises(BirdVoxClassifyError, predict, np.array([1, 2, 3, 4]), model,
                   logging.INFO)
+    pytest.raises(BirdVoxClassifyError, predict, np.zeros((1, 42, 104, 1)),
+                  model, logging.INFO)
+    pytest.raises(BirdVoxClassifyError, predict, np.zeros((1, 120, 42, 1)),
+                  model, logging.INFO)
+    pytest.raises(BirdVoxClassifyError, predict, np.zeros((1, 120, 104, 42)),
+                  model, logging.INFO)
 
 
 def test_get_output_path():
@@ -495,7 +528,7 @@ def test_get_pcen_settings():
 
 def test_get_model_path():
     test_model_name = "test_model_name"
-    exp_model_path = os.path.join(MODULE_DIR, "models", test_model_name + '.h5')
+    exp_model_path = os.path.join(RES_DIR, "models", test_model_name + '.h5')
     model_path = get_model_path(test_model_name)
     assert os.path.abspath(model_path) == os.path.abspath(exp_model_path)
 
