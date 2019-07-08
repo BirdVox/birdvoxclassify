@@ -186,6 +186,7 @@ def batch_generator(filepath_list, batch_size=512):
             yield np.vstack(batch), batch_filepaths
             file_count = 0
             batch = []
+            batch_filepaths = []
 
     # Yield final batch
     if file_count > 0:
