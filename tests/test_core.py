@@ -10,7 +10,7 @@ import logging
 from scipy.signal.windows import get_window
 from six import string_types
 from numbers import Real
-from birdvoxclassify.birdvoxdetect_exceptions import BirdVoxClassifyError
+from birdvoxclassify.birdvoxclassify_exceptions import BirdVoxClassifyError
 
 PROJECT_DIR = os.path.join(os.path.dirname(__file__), "..")
 MODULE_DIR = os.path.join(PROJECT_DIR, "birdvoxclassify")

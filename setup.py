@@ -1,7 +1,6 @@
 import os
 import sys
 import gzip
-import imp
 from setuptools import setup, find_packages
 
 try:
@@ -39,9 +38,21 @@ else:
             os.remove(compressed_path)
             print('Removing compressed file')
 
+try:
+    import types
+    import importlib.machinery
+    loader = importlib.machinery.SourceFileLoader(
+        'birdvoxclassify.version',
+        os.path.join('birdvoxclassify', 'version.py'))
+    version = types.ModuleType(loader.name)
+    loader.exec_module(version)
+except ImportError:
+    import types
+    import imp
+    version = imp.load_source(
+        'birdvoxclassify.version',
+        os.path.join('birdvoxclassify', 'version.py'))
 
-version = imp.load_source(
-    'birdvoxclassify.version', os.path.join('birdvoxclassify', 'version.py'))
 
 with open('README.md') as file:
     long_description = file.read()
@@ -84,7 +95,8 @@ setup(
         'PySoundFile>=0.9.0',
         'resampy>=0.2.0',
         'h5py>=2.7.0',
-        'pandas>=0.23'
+        'pandas>=0.23',
+        'six>=1.12.0'
     ],
     extras_require={
         'docs': [
@@ -94,6 +106,8 @@ setup(
                 'numpydoc',
             ],
         'tests': [
+            'pytest>=5.0.1',
+            'mock>=3.0.5'
         ]
     },
     package_data={

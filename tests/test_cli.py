@@ -2,19 +2,21 @@ import pytest
 import os
 import tempfile
 import shutil
-from birdvoxclassify.cli import get_file_list, run, parse_args, main, positive_int
-from birdvoxclassify.birdvoxdetect_exceptions import BirdVoxClassifyError
+from birdvoxclassify.cli import (get_file_list, run, parse_args,
+                                 main, positive_int)
+from birdvoxclassify.birdvoxclassify_exceptions import BirdVoxClassifyError
 try:
     # python 3.4+ should use builtin unittest.mock not mock package
     from unittest.mock import patch
 except ImportError:
-from mock import patch
+    from mock import patch
 
 
 TEST_AUDIO_DIR = os.path.join(os.path.dirname(__file__), 'data/audio')
 CHIRP_PATH = os.path.join(TEST_AUDIO_DIR, 'synth_chirp.wav')
 
-MODEL_NAME = "birdvoxclassify-flat-multitask_tv1fine-2e7e1bbd434a35b3961e315cfe3832fc"
+MODEL_SUFFIX = "flat-multitask_tv1fine-2e7e1bbd434a35b3961e315cfe3832fc"
+MODEL_NAME = "birdvoxclassify-{}".format(MODEL_SUFFIX)
 
 
 def test_get_file_list():
@@ -66,8 +68,8 @@ def test_parse_args():
     args = [CHIRP_PATH]
     args = parse_args(args)
     assert args.output_dir is None
-    assert args.export_clips == False
-    assert args.export_confidence == False
+    assert args.export_clips is False
+    assert args.export_confidence is False
     assert args.threshold == 30.0
     assert args.suffix == ""
     assert args.clip_duration == 1.0
@@ -151,9 +153,8 @@ def test_run(capsys):
 
     # make sure it printed a message
     captured = capsys.readouterr()
-    expected_message =\
-        'birdvoxclassify: No WAV files found in {}. Aborting.\n'.format(
-        str([tempdir]))
+    expected_message = 'birdvoxclassify: No WAV files found in {}. Aborting.\n'
+    expected_message = expected_message.format(str([tempdir]))
     assert captured.out == expected_message
 
     # test string input

@@ -12,7 +12,10 @@ import birdvoxclassify
 from birdvoxclassify.birdvoxclassify_exceptions import BirdVoxClassifyError
 
 # The following line circumvent issue #1715 in xgboost
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
+DEFAULT_MODEL_SUFFIX = "flat-multitask_tv1fine-2e7e1bbd434a35b3961e315cfe3832fc"
+DEFAULT_MODEL_NAME = "birdvoxclassify-{}".format(DEFAULT_MODEL_SUFFIX)
 
 
 def get_file_list(input_list):
@@ -61,13 +64,14 @@ def run(inputs, output_dir=None, output_summary_path=None, classifier_name="",
         logging.info("birdvoxclassify: Suffix string = " + suffix)
 
     # Process all files in the arguments
-    output = process_file(file_list,
-                 output_dir=output_dir,
-                 output_summary_path=output_summary_path,
-                 classifier_name=classifier_name,
-                 batch_size=batch_size,
-                 suffix=suffix,
-                 logger_level=logger_level)
+    output = birdvoxclassify.process_file(
+        file_list,
+        output_dir=output_dir,
+        output_summary_path=output_summary_path,
+        classifier_name=classifier_name,
+        batch_size=batch_size,
+        suffix=suffix,
+        logger_level=logger_level)
 
     logging.info('birdvoxclassify: Printing output.')
     logging.info(pformat(output))
@@ -94,7 +98,7 @@ def parse_args(args):
         help='Directory to save individual output file(s)')
 
     parser.add_argument(
-        '--classifier-name', '-c', default='birdvoxclassify-flat-multitask_tv1fine-2e7e1bbd434a35b3961e315cfe3832fc',
+        '--classifier-name', '-c', default=DEFAULT_MODEL_NAME,
         help='Name of bird species classifier to be used.')
 
     parser.add_argument(
