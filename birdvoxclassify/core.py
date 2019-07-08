@@ -51,7 +51,7 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
         batch_pred = predict(batch, classifier, logger_level)
 
         for idx, filepath in enumerate(batch_filepaths):
-            pred = [float(p[idx]) for p in batch_pred]
+            pred = [p[idx] for p in batch_pred]
             pred_dict = format_pred(pred, taxonomy)
 
             output_dict[filepath] = pred_dict
