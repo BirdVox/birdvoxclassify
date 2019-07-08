@@ -418,7 +418,7 @@ def test_predict():
     assert type(pred) == list
     assert pred[0].shape == (1, 1)
     assert pred[1].shape == (1, 5)
-    assert pred[2].shape == (1, 14)
+    assert pred[2].shape == (1, 15)
 
     gen = batch_generator([CHIRP_PATH]*10, batch_size=10)
     batch = next(gen)
@@ -563,15 +563,14 @@ def test_get_taxonomy_path():
     model_name = "test-model-name_{}-{}".format(taxonomy_version, exp_md5sum)
     try:
         taxonomy_path = get_taxonomy_path(model_name)
+        assert os.path.abspath(taxonomy_path) == os.path.abspath(exp_taxonomy_path)
+
+        # Make sure that an error is raised when md5sum doesn't match
+        hash_md5 = hashlib.md5()
+        hash_md5.update("different".encode())
+        diff_md5sum = hash_md5.hexdigest()
+        model_name = "test-model-name_{}-{}".format(taxonomy_version, diff_md5sum)
+        pytest.raises(BirdVoxClassifyError, get_taxonomy_path,
+                      model_name)
     finally:
         os.remove(exp_taxonomy_path)
-
-    assert os.path.abspath(taxonomy_path) == os.path.abspath(exp_taxonomy_path)
-
-    # Make sure that an error is raised when md5sum doesn't match
-    hash_md5 = hashlib.md5()
-    hash_md5.update("different".encode())
-    diff_md5sum = hash_md5.hexdigest()
-    model_name = "test-model-name_{}-{}".format(taxonomy_version, diff_md5sum)
-    pytest.raises(BirdVoxClassifyError, get_taxonomy_path,
-                  model_name)
