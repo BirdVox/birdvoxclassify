@@ -179,13 +179,13 @@ def batch_generator(filepath_list, batch_size=512):
         file_count += 1
 
         if file_count == batch_size:
-            yield np.vstack(batch)
+            yield np.vstack(batch), batch_filepaths
             file_count = 0
             batch = []
 
     # Yield final batch
     if file_count > 0:
-        yield np.vstack(batch)
+        yield np.vstack(batch), batch_filepaths
 
     raise StopIteration
 
