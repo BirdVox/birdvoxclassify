@@ -90,15 +90,15 @@ def parse_args(args):
         help='Directory to save individual output file(s)')
 
     parser.add_argument(
-        '--summary-output-path', '-o', default=None,
+        '--summary-output-path', '-O', default=None,
         help='Directory to save individual output file(s)')
 
     parser.add_argument(
-        '--classifier-name', '-c', default='bv-multiclass-tv1',
+        '--classifier-name', '-c', default='birdvoxclassify-flat-multitask_tv1fine-2e7e1bbd434a35b3961e315cfe3832fc',
         help='Name of bird species classifier to be used.')
 
     parser.add_argument(
-        '--batch_size', '-b', type=positive_int, default=512,
+        '--batch-size', '-b', type=positive_int, default=512,
         help='Input batch size used by classifier model.'
     )
 
