@@ -11,6 +11,10 @@ import soundfile as sf
 
 from .birdvoxclassify_exceptions import BirdVoxClassifyError
 
+DEFAULT_MODEL_SUFFIX = "flat-multitask-convnet_" \
+                       "tv1hierarchical-a112ec5506b67d95109894a7dbfd186e"
+DEFAULT_MODEL_NAME = "birdvoxclassify-{}".format(DEFAULT_MODEL_SUFFIX)
+
 
 def process_file(filepaths, output_dir=None, output_summary_path=None,
                  classifier=None, taxonomy=None, batch_size=512, suffix='',
@@ -47,7 +51,7 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
         batch_pred = predict(batch, classifier, logger_level)
 
         for idx, filepath in enumerate(batch_filepaths):
-            pred = [p[idx] for p in batch_pred]
+            pred = [float(p[idx]) for p in batch_pred]
             pred_dict = format_pred(pred, taxonomy)
 
             output_dict[filepath] = pred_dict
@@ -96,7 +100,7 @@ def format_pred(pred_list, taxonomy):
             else:
                 ref_id = "other"
 
-            pred_dict[level][ref_id] = {'probability': prob}
+            pred_dict[level][ref_id] = {'probability': float(prob)}
 
             if ref_id != "other":
                 pred_dict[level][ref_id].update(get_taxonomy_node(ref_id,

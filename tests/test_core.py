@@ -59,15 +59,7 @@ def test_process_file():
             assert isinstance(k, string_types)
             assert type(v) == dict
 
-        # Test with given classifier
-        output = process_file([CHIRP_PATH], classifier=model)
-        assert type(output) == dict
-        assert len(output) == 1
-        for k, v in output.items():
-            assert isinstance(k, string_types)
-            assert type(v) == dict
-
-        # Test with given taxonomy
+        # Test with given classifier and taxonomy
         output = process_file([CHIRP_PATH], classifier=model, taxonomy=taxonomy)
         assert type(output) == dict
         assert len(output) == 1
@@ -344,16 +336,18 @@ def test_batch_generator():
         next(gen)
 
     gen = batch_generator([CHIRP_PATH]*10, batch_size=10)
-    batch = next(gen)
+    batch, batch_filepaths = next(gen)
     assert type(batch) == np.ndarray
     assert batch.shape == (10, pcen_settings['top_freq_id'],
                            pcen_settings['n_hops'], 1)
+    assert len(batch_filepaths) == 10
 
     gen = batch_generator([CHIRP_PATH], batch_size=10)
-    batch = next(gen)
+    batch, batch_filepaths = next(gen)
     assert type(batch) == np.ndarray
     assert batch.shape == (1, pcen_settings['top_freq_id'],
                            pcen_settings['n_hops'], 1)
+    assert len(batch_filepaths) == 1
 
 
 def test_compute_pcen():
@@ -421,7 +415,7 @@ def test_predict():
     assert pred[2].shape == (1, 15)
 
     gen = batch_generator([CHIRP_PATH]*10, batch_size=10)
-    batch = next(gen)
+    batch, batch_filepaths = next(gen)
     pred = predict(batch, model, logging.INFO)
     assert type(pred) == list
     assert pred[0].shape == (10, 1)

@@ -8,14 +8,11 @@ import sys
 from pprint import pformat
 
 import birdvoxclassify
+from birdvoxclassify.core import DEFAULT_MODEL_NAME
 from birdvoxclassify.birdvoxclassify_exceptions import BirdVoxClassifyError
 
 # The following line circumvent issue #1715 in xgboost
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-
-DEFAULT_MODEL_SUFFIX = "flat-multitask-convnet_" \
-                       "tv1hierarchical-a112ec5506b67d95109894a7dbfd186e"
-DEFAULT_MODEL_NAME = "birdvoxclassify-{}".format(DEFAULT_MODEL_SUFFIX)
 
 
 def get_file_list(input_list):
