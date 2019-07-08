@@ -32,6 +32,7 @@ MODEL_NAME = "birdvoxclassify-{}".format(MODEL_SUFFIX)
 
 def test_process_file():
     test_output_dir = tempfile.mkdtemp()
+    test_audio_dir = tempfile.mkdtemp()
     model = load_model(MODEL_NAME)
     with open(TAXV1_HIERARCHICAL_PATH) as f:
         taxonomy = json.load(f)
@@ -104,26 +105,36 @@ def test_process_file():
             f_output = json.load(f)
         assert output == f_output
 
+        test_a_path = os.path.join(test_audio_dir, "a.wav")
+        test_b_path = os.path.join(test_audio_dir, "b.wav")
+        test_c_path = os.path.join(test_audio_dir, "c.wav")
+        test_d_path = os.path.join(test_audio_dir, "d.wav")
+
+        shutil.copy(CHIRP_PATH, test_a_path)
+        shutil.copy(CHIRP_PATH, test_b_path)
+        shutil.copy(CHIRP_PATH, test_c_path)
+        shutil.copy(CHIRP_PATH, test_d_path)
+
+        test_audio_list = [test_a_path, test_b_path, test_c_path, test_d_path]
+
         # Test multiple files
-        output = process_file([CHIRP_PATH]*10, classifier=model)
+        output = process_file(test_audio_list, classifier=model)
         assert type(output) == dict
-        assert len(output) == 10
+        assert len(output) == len(test_audio_list)
         for k, v in output.items():
             assert isinstance(k, string_types)
             assert type(v) == dict
 
         # Test with different batch_sizes
-        output = process_file([CHIRP_PATH]*10, classifier=model, batch_size=5)
+        output = process_file(test_audio_list, classifier=model, batch_size=2)
         assert type(output) == dict
-        assert len(output) == 10
+        assert len(output) == len(test_audio_list)
         for k, v in output.items():
             assert isinstance(k, string_types)
             assert type(v) == dict
-
-        # Make sure we fail if no classifier name is given
-        pytest.raises(BirdVoxClassifyError, process_file, CHIRP_PATH)
     finally:
         shutil.rmtree(test_output_dir)
+        shutil.rmtree(test_audio_dir)
 
 
 def test_format_pred():
