@@ -105,7 +105,7 @@ def test_process_file():
         assert output == f_output
 
         # Test multiple files
-        process_file([CHIRP_PATH]*10, classifier=model)
+        output = process_file([CHIRP_PATH]*10, classifier=model)
         assert type(output) == dict
         assert len(output) == 10
         for k, v in output.items():
@@ -113,7 +113,7 @@ def test_process_file():
             assert type(v) == dict
 
         # Test with different batch_sizes
-        process_file([CHIRP_PATH]*10, classifier=model, batch_size=5)
+        output = process_file([CHIRP_PATH]*10, classifier=model, batch_size=5)
         assert type(output) == dict
         assert len(output) == 10
         for k, v in output.items():
