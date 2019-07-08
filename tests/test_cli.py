@@ -22,7 +22,6 @@ MODEL_NAME = "birdvoxclassify-{}".format(MODEL_SUFFIX)
 def test_get_file_list():
     # Make test audio directory
     test_dir = tempfile.mkdtemp()
-    os.makedirs(test_dir)
     test_a_path = os.path.join(test_dir, "a.wav")
     test_b_path = os.path.join(test_dir, "b.wav")
     test_c_path = os.path.join(test_dir, "c.wav")
@@ -68,11 +67,10 @@ def test_parse_args():
     args = [CHIRP_PATH]
     args = parse_args(args)
     assert args.output_dir is None
-    assert args.export_clips is False
-    assert args.export_confidence is False
-    assert args.threshold == 30.0
+    assert args.summary_output_path is None
+    assert args.classifier_name == MODEL_NAME
+    assert args.batch_size == 512
     assert args.suffix == ""
-    assert args.clip_duration == 1.0
     assert args.quiet is False
     assert args.verbose is False
 
@@ -91,6 +89,7 @@ def test_parse_args():
     assert args.batch_size == 16
     assert args.suffix == 'suffix'
     assert args.quiet is True
+    assert args.verbose is False
 
     # Test clash between quiet and verbose
     args = [CHIRP_PATH,
