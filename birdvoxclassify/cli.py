@@ -108,7 +108,7 @@ def parse_args(args):
     )
 
     parser.add_argument(
-        '--suffix', '-s', default="", dest='suffix'
+        '--suffix', '-s', default="", dest='suffix',
         help='String to append to the output filenames.'
              'The default value is the empty string.')
 
