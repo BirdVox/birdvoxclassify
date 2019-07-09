@@ -118,6 +118,7 @@ def format_pred(pred_list, taxonomy):
     The output will be in the following format:
 
     .. code-block:: javascript
+
         {
           <prediction level> : {
             <taxonomy id> : {
