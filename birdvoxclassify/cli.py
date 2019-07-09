@@ -141,7 +141,7 @@ def main():
 
     if args.version:
         print(birdvoxclassify.version.version)
-        exit(0)
+        return
 
     if args.quiet:
         logger_level = 30
