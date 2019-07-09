@@ -17,6 +17,7 @@ Using the Library
 You can simply compute bird species predictions out of the box, like so:
 
 .. code-block:: python
+
     import birdvoxclassify as bvc
     filepath = '/path/to/file.wav'
     filepath_list = [
@@ -83,6 +84,7 @@ Using the Command Line Interface (CLI)
 To compute embeddings for a single file via the command line run:
 
 .. code-block:: shell
+
     $ birdvoxclassify /path/to/file.wav
 
 This will print out the model prediction in JSON format.
@@ -90,11 +92,13 @@ This will print out the model prediction in JSON format.
 You can also provide multiple input files or directories:
 
 .. code-block:: shell
+
     $ birdvoxclassify /path/to/file1.wav /path/to/file2.wav /path/to/file3.wav
 
 You can set the output directory for per-file output files as follows:
 
 .. code-block:: shell
+
     $ birdvoxclassify /path/to/file1.wav /path/to/file2.wav /path/to/file3.wav --output-dir /output/dir
 
 This will create an output files ``/output/dir/file1.json``, ``/output/dir/file2.json``, and ``/output/dir/file3.json``.
@@ -102,6 +106,7 @@ This will create an output files ``/output/dir/file1.json``, ``/output/dir/file2
 You can create a single summary output file as follows:
 
 .. code-block:: shell
+
     $ birdvoxclassify /path/to/file1.wav /path/to/file2.wav /path/to/file3.wav --output-summary-path /output/summary/path.json
 
 which will create a summary output file at ``/output/summary/path.json``.
@@ -109,17 +114,20 @@ which will create a summary output file at ``/output/summary/path.json``.
 You can specify the classifier model name as follows:
 
 .. code-block:: shell
+
     $ birdvoxclassify /path/to/file.wav --classifier-name birdvoxclassify-flat-multitask-convnet_tv1hierarchical-a112ec5506b67d95109894a7dbfd186e
 
 If processing a large number of files, you can set the prediction batch size appropriately for your computational
 resources as follows:
 
 .. code-block:: shell
+
     $ birdvoxclassify /large/audio/dir --batch-size 128
 
 You can append a suffix to the output files as follows:
 
 .. code-block:: shell
+
     $ birdvoxclassify /path/to/file1.wav /path/to/file2.wav /path/to/file3.wav --output-dir /output/dir --suffix suffix
 
 This will create an output files ``/output/dir/file1_suffix.json``, ``/output/dir/file2_suffix.json``, and ``/output/dir/file3_suffix.json``.

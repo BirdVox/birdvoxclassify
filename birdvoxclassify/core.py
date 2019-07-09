@@ -29,16 +29,16 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
         Filepath or list of filepaths of audio files for which to run prediction
     output_dir : str or None [default: None]
         Output directory used for outputting per-file prediction JSON files. If
-        `None`, no per-file prediction JSON files are produced.
+        ``None``, no per-file prediction JSON files are produced.
     output_summary_path : str or None [default: None]
         Output path for summary prediction JSON file for all processed audio
-        files. If `None`, no summary prediction file is produced.
+        files. If ``None``, no summary prediction file is produced.
     classifier : keras.models.Model or None [default: None]
-        Bird species classification model object. If `None`, the model
-        corresponding to `model_name` is loaded.
+        Bird species classification model object. If ``None``, the model
+        corresponding to ``model_name`` is loaded.
     taxonomy : dict or None [default: None]
-        Taxonomy JSON object. If `None`, the taxonomy corresponding to
-        `model_name` is loaded.
+        Taxonomy JSON object. If ``None``, the taxonomy corresponding to
+        ``model_name`` is loaded.
     batch_size : int [default: 512]
         Batch size for predictions
     suffix : str [default: ""]
@@ -47,7 +47,7 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
         Logger level
     model_name : str [default birdvoxclassify.DEFAULT_MODEL_NAME]
         Name of classifier model. Should be in format
-        `<model id>_<taxonomy version>-<taxonomy md5sum>`
+        ``<model id>_<taxonomy version>-<taxonomy md5sum>``
     custom_objects : dict[str, *] or None
         Optional dictionary of custom Keras objects needed for model
 
@@ -55,7 +55,7 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
     -------
     output_dict : dict[str, dict]
         Output dictionary mapping audio filename to prediction dictionary, in
-        the format produced by `format_pred`.
+        the format produced by ``format_pred``.
     """
     # Set logger level.
     logging.getLogger().setLevel(logger_level)
@@ -117,27 +117,26 @@ def format_pred(pred_list, taxonomy):
 
     The output will be in the following format:
 
-    ```
-    {
-      <prediction level> : {
-        <taxonomy id> : {
-          "common_name": <str>,
-          "scientific_name": <str>,
-          "taxonomy_level_names": <str>,
-          "taxonomy_level_aliases": <dict of aliases>,
-          "child_ids": <list of children IDs>
-        },
-        ...
-      },
-      ...
-    }
-    ```
+    .. code-block:: javascript
+        {
+          <prediction level> : {
+            <taxonomy id> : {
+              "common_name": <str>,
+              "scientific_name": <str>,
+              "taxonomy_level_names": <str>,
+              "taxonomy_level_aliases": <dict of aliases>,
+              "child_ids": <list of children IDs>
+            },
+            ...
+          },
+          ...
+        }
 
     Parameters
     ----------
     pred_list : list[np.ndarray [shape (1, num_labels) or (num_labels,)]
         List of predictions at the taxonomical levels predicted by the model
-        for a single example. `num_labels` may be different for each of the
+        for a single example. ``num_labels`` may be different for each of the
         different levels of the taxonomy.
     taxonomy : dict
         Taxonomy JSON object
@@ -196,14 +195,14 @@ def format_pred_batch(batch_pred_list, taxonomy):
     Formats a list of predictions for a batch of audio clips into a more
     human-readable JSON object using the given taxonomy object. The output will
     be in the form of a list of JSON objects in the format returned by
-    `format_pred`.
+    ``format_pred``.
 
 
     Parameters
     ----------
     batch_pred_list : list[np.ndarray [shape (batch_size, num_labels)] ]
         List of predictions at the taxonomical levels predicted by the model
-        for a batch of examples. `num_labels` may be different for each of the
+        for a batch of examples. ``num_labels`` may be different for each of the
         different levels of the taxonomy.
     taxonomy : dict
         Taxonomy JSON object
@@ -230,7 +229,7 @@ def format_pred_batch(batch_pred_list, taxonomy):
 
 def get_taxonomy_node(ref_id, taxonomy):
     """
-    Gets node in taxonomy corresponding to the given reference ID (e.g. `1.4.1`)
+    Gets node in taxonomy corresponding to the given reference ID (e.g. ``1.4.1``)
 
     Parameters
     ----------
@@ -341,7 +340,7 @@ def compute_pcen(audio, sr, input_format=True):
     input_format : bool [default: True]
         If True, adds an additional channel dimension (of size 1) and ensures
         that a fixed number of PCEN frames (corresponding to
-        `get_pcen_settings()['n_hops']`) is returned. If number of frames is
+        ``get_pcen_settings()['n_hops']``) is returned. If number of frames is
         greater, the center frames are returned. If the the number of frames is
         less, empty frames are padded.
 
@@ -349,9 +348,9 @@ def compute_pcen(audio, sr, input_format=True):
     -------
     pcen : np.ndarray [shape: (top_freq_id, n_hops, 1) or (top_freq_id, num_frames)]
         Per-channel energy normalization processed Mel spectrogram. If
-        `input_format=True`, will be in shape `(top_freq_id, n_hops, 1)`.
-        Otherwise it will be in shape `(top_freq_id, num_frames)`, where
-        `num_frames` is the number of PCEN frames for the entire audio clip.
+        ``input_format=True``, will be in shape ``(top_freq_id, n_hops, 1)``.
+        Otherwise it will be in shape ``(top_freq_id, num_frames)``, where
+        ``num_frames`` is the number of PCEN frames for the entire audio clip.
 
     """
     # Load settings.
@@ -459,7 +458,7 @@ def predict(pcen, classifier, logger_level=logging.INFO):
         List of predictions at the taxonomical levels predicted by the model.
         num_labels may be different for each of the different levels of the
         taxonomy. If a single example is given (i.e. there is no batch dimension
-        in the input PCEN), `batch_size = 1`.
+        in the input PCEN), ``batch_size = 1``.
 
     """
     pcen_settings = get_pcen_settings()
@@ -568,13 +567,13 @@ def get_model_path(model_name):
     ----------
     model_name : str
         Name of classifier model. Should be in format
-        `<model id>_<taxonomy version>-<taxonomy md5sum>`
+        ``<model id>_<taxonomy version>-<taxonomy md5sum>``
 
     Returns
     -------
     model_path : str
         Path to classifier model weights. Should be in format
-        `<BirdVoxClassify dir>/resources/models/<model id>_<taxonomy version>-<taxonomy md5sum>.h5`
+        ``<BirdVoxClassify dir>/resources/models/<model id>_<taxonomy version>-<taxonomy md5sum>.h5``
 
     """
     path = os.path.join(os.path.dirname(__file__),
@@ -594,7 +593,7 @@ def load_classifier(model_name, custom_objects=None):
     ----------
     model_name : str
         Name of classifier model. Should be in format
-        `<model id>_<taxonomy version>-<taxonomy md5sum>`
+        ``<model id>_<taxonomy version>-<taxonomy md5sum>``
     custom_objects : dict[str, *] or None
         Optional dictionary of custom Keras objects needed for model
 
@@ -631,10 +630,10 @@ def get_taxonomy_path(model_name):
 
     Specifically, with a model name of the format:
 
-    `<model id>_<taxonomy version>-<taxonomy md5sum>`
+    ``<model id>_<taxonomy version>-<taxonomy md5sum>``
 
     the path to taxonomy file
-    `<BirdVoxClassify dir>/resources/taxonomy/<taxonomy version>.json`
+    ``<BirdVoxClassify dir>/resources/taxonomy/<taxonomy version>.json``
     is returned. The MD5 checksum of this file is compared to <taxonomy md5sum>
     to ensure that the content of the taxonomy file matches the format of the
     output that the model is expected to produce.
