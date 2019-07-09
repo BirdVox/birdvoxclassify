@@ -15,6 +15,7 @@ Using the Library
 -----------------
 
 You can simply compute bird species predictions out of the box, like so:
+
 .. code-block:: python
     import birdvoxclassify as bvc
     filepath = '/path/to/file.wav'
@@ -52,6 +53,7 @@ You can simply compute bird species predictions out of the box, like so:
 
 
 You can also compute predictions directly on loaded audio arrays:
+
 .. code-block:: python
 
     import birdvoxclassify as bvc
@@ -98,17 +100,20 @@ You can set the output directory for per-file output files as follows:
 This will create an output files ``/output/dir/file1.json``, ``/output/dir/file2.json``, and ``/output/dir/file3.json``.
 
 You can create a single summary output file as follows:
+
 .. code-block:: shell
     $ birdvoxclassify /path/to/file1.wav /path/to/file2.wav /path/to/file3.wav --output-summary-path /output/summary/path.json
 
 which will create a summary output file at ``/output/summary/path.json``.
 
 You can specify the classifier model name as follows:
+
 .. code-block:: shell
     $ birdvoxclassify /path/to/file.wav --classifier-name birdvoxclassify-flat-multitask-convnet_tv1hierarchical-a112ec5506b67d95109894a7dbfd186e
 
 If processing a large number of files, you can set the prediction batch size appropriately for your computational
 resources as follows:
+
 .. code-block:: shell
     $ birdvoxclassify /large/audio/dir --batch-size 128
 
