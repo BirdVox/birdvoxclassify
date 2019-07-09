@@ -34,7 +34,7 @@ MODEL_NAME = "birdvoxclassify-{}".format(MODEL_SUFFIX)
 def test_process_file():
     test_output_dir = tempfile.mkdtemp()
     test_audio_dir = tempfile.mkdtemp()
-    model = load_model(MODEL_NAME)
+    classifier = load_classifier(MODEL_NAME)
     with open(TAXV1_HIERARCHICAL_PATH) as f:
         taxonomy = json.load(f)
     test_output_summary_path = os.path.join(test_output_dir, "summary.json")
@@ -46,7 +46,7 @@ def test_process_file():
 
     try:
         # Test with defaults
-        output = process_file(CHIRP_PATH, classifier_name=MODEL_NAME)
+        output = process_file(CHIRP_PATH, model_name=MODEL_NAME)
         assert type(output) == dict
         assert len(output) == 1
         for k, v in output.items():
@@ -54,7 +54,7 @@ def test_process_file():
             assert type(v) == dict
 
         # Test with list
-        output = process_file([CHIRP_PATH], classifier_name=MODEL_NAME)
+        output = process_file([CHIRP_PATH], model_name=MODEL_NAME)
         assert type(output) == dict
         assert len(output) == 1
         for k, v in output.items():
@@ -62,7 +62,8 @@ def test_process_file():
             assert type(v) == dict
 
         # Test with given classifier and taxonomy
-        output = process_file([CHIRP_PATH], classifier=model, taxonomy=taxonomy)
+        output = process_file([CHIRP_PATH], classifier=classifier,
+                              taxonomy=taxonomy)
         assert type(output) == dict
         assert len(output) == 1
         for k, v in output.items():
@@ -71,7 +72,7 @@ def test_process_file():
 
         # Test output_dir
         output = process_file([CHIRP_PATH], output_dir=test_output_dir,
-                              classifier=model)
+                              classifier=classifier)
         assert type(output) == dict
         assert len(output) == 1
         for k, v in output.items():
@@ -83,7 +84,7 @@ def test_process_file():
 
         # Test output dir with suffix
         output = process_file([CHIRP_PATH], output_dir=test_output_dir,
-                              classifier=model, suffix='suffix')
+                              classifier=classifier, suffix='suffix')
         assert type(output) == dict
         assert len(output) == 1
         for k, v in output.items():
@@ -96,7 +97,7 @@ def test_process_file():
         # Test output summary file
         output = process_file([CHIRP_PATH],
                               output_summary_path=test_output_summary_path,
-                              classifier=model)
+                              classifier=classifier)
         assert type(output) == dict
         assert len(output) == 1
         for k, v in output.items():
@@ -119,7 +120,7 @@ def test_process_file():
         test_audio_list = [test_a_path, test_b_path, test_c_path, test_d_path]
 
         # Test multiple files
-        output = process_file(test_audio_list, classifier=model)
+        output = process_file(test_audio_list, classifier=classifier)
         assert type(output) == dict
         assert len(output) == len(test_audio_list)
         for k, v in output.items():
@@ -127,7 +128,7 @@ def test_process_file():
             assert type(v) == dict
 
         # Test with different batch_sizes
-        output = process_file(test_audio_list, classifier=model, batch_size=2)
+        output = process_file(test_audio_list, classifier=classifier, batch_size=2)
         assert type(output) == dict
         assert len(output) == len(test_audio_list)
         for k, v in output.items():
@@ -137,7 +138,7 @@ def test_process_file():
         # Make sure we create the output dir if it doesn't exist
         shutil.rmtree(test_output_dir)
         output = process_file([CHIRP_PATH], output_dir=test_output_dir,
-                              classifier=model)
+                              classifier=classifier)
         assert type(output) == dict
         assert len(output) == 1
         for k, v in output.items():
@@ -475,11 +476,11 @@ def test_compute_pcen():
 
 
 def test_predict():
-    model = load_model(MODEL_NAME)
+    classifier = load_classifier(MODEL_NAME)
 
     audio, sr = sf.read(CHIRP_PATH, dtype='float64')
     pcen = compute_pcen(audio, sr)
-    pred = predict(pcen, model, logging.INFO)
+    pred = predict(pcen, classifier, logging.INFO)
     assert type(pred) == list
     assert pred[0].shape == (1, 1)
     assert pred[1].shape == (1, 5)
@@ -487,7 +488,7 @@ def test_predict():
 
     gen = batch_generator([CHIRP_PATH]*10, batch_size=10)
     batch, batch_filepaths = next(gen)
-    pred = predict(batch, model, logging.INFO)
+    pred = predict(batch, classifier, logging.INFO)
     assert type(pred) == list
     assert pred[0].shape == (10, 1)
     assert pred[1].shape == (10, 5)
@@ -495,15 +496,15 @@ def test_predict():
 
     # Test invalid inputs
     inv_pcen = compute_pcen(audio, sr, input_format=False)[..., np.newaxis]
-    pytest.raises(BirdVoxClassifyError, predict, inv_pcen, model, logging.INFO)
-    pytest.raises(BirdVoxClassifyError, predict, np.array([1, 2, 3, 4]), model,
+    pytest.raises(BirdVoxClassifyError, predict, inv_pcen, classifier, logging.INFO)
+    pytest.raises(BirdVoxClassifyError, predict, np.array([1, 2, 3, 4]), classifier,
                   logging.INFO)
     pytest.raises(BirdVoxClassifyError, predict, np.zeros((1, 42, 104, 1)),
-                  model, logging.INFO)
+                  classifier, logging.INFO)
     pytest.raises(BirdVoxClassifyError, predict, np.zeros((1, 120, 42, 1)),
-                  model, logging.INFO)
+                  classifier, logging.INFO)
     pytest.raises(BirdVoxClassifyError, predict, np.zeros((1, 120, 104, 42)),
-                  model, logging.INFO)
+                  classifier, logging.INFO)
 
 
 def test_get_output_path():
@@ -598,9 +599,9 @@ def test_get_model_path():
     assert os.path.abspath(model_path) == os.path.abspath(exp_model_path)
 
 
-def test_load_model():
-    model = load_model(MODEL_NAME)
-    assert type(model) == keras.models.Model
+def test_load_classifier():
+    classifier = load_classifier(MODEL_NAME)
+    assert type(classifier) == keras.models.Model
 
     # Test invalid inputs
     invalid_path = get_model_path("invalid-classifier")
@@ -608,11 +609,11 @@ def test_load_model():
         f.write("INVALID")
 
     try:
-        pytest.raises(BirdVoxClassifyError, load_model, "invalid-classifier")
+        pytest.raises(BirdVoxClassifyError, load_classifier, "invalid-classifier")
     finally:
         os.remove(invalid_path)
 
-    pytest.raises(BirdVoxClassifyError, load_model, "/invalid/path")
+    pytest.raises(BirdVoxClassifyError, load_classifier, "/invalid/path")
 
 
 def test_get_taxonomy_path():

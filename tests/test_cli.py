@@ -69,7 +69,7 @@ def test_parse_args():
     args = parse_args(args)
     assert args.output_dir is None
     assert args.output_summary_path is None
-    assert args.classifier_name == MODEL_NAME
+    assert args.model_name == MODEL_NAME
     assert args.batch_size == 512
     assert args.suffix == ""
     assert args.quiet is False
@@ -86,7 +86,7 @@ def test_parse_args():
     args = parse_args(args)
     assert args.output_dir == '/tmp/output/dir'
     assert args.output_summary_path == '/tmp/summary.json'
-    assert args.classifier_name == MODEL_NAME
+    assert args.model_name == MODEL_NAME
     assert args.batch_size == 16
     assert args.suffix == 'suffix'
     assert args.quiet is True

@@ -37,7 +37,7 @@ def get_file_list(input_list):
 
 
 def run(inputs, output_dir=None, output_summary_path=None,
-        classifier_name=DEFAULT_MODEL_NAME, batch_size=512, suffix="",
+        model_name=DEFAULT_MODEL_NAME, batch_size=512, suffix="",
         logger_level=logging.INFO):
     """Runs classification model on input audio clips"""
     # Set logger level.
@@ -67,7 +67,7 @@ def run(inputs, output_dir=None, output_summary_path=None,
         file_list,
         output_dir=output_dir,
         output_summary_path=output_summary_path,
-        classifier_name=classifier_name,
+        model_name=model_name,
         batch_size=batch_size,
         suffix=suffix,
         logger_level=logger_level)
@@ -98,9 +98,9 @@ def parse_args(args):
         help='Directory to save individual output file(s)')
 
     parser.add_argument(
-        '--classifier-name', '-c', default=DEFAULT_MODEL_NAME,
-        dest='classifier_name',
-        help='Name of bird species classifier to be used.')
+        '--model-name', '-c', default=DEFAULT_MODEL_NAME,
+        dest='model_name',
+        help='Name of bird species classifier model to be used.')
 
     parser.add_argument(
         '--batch-size', '-b', type=positive_int, default=512, dest='batch_size',
@@ -155,7 +155,7 @@ def main():
     run(args.inputs,
         output_dir=args.output_dir,
         output_summary_path=args.output_summary_path,
-        classifier_name=args.classifier_name,
+        model_name=args.model_name,
         batch_size=args.batch_size,
         suffix=args.suffix,
         logger_level=logger_level)

@@ -65,7 +65,7 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
 
     # Load the classifier.
     if classifier is None:
-        classifier = load_model(model_name, custom_objects=custom_objects)
+        classifier = load_classifier(model_name, custom_objects=custom_objects)
 
     if taxonomy is None:
         taxonomy_path = get_taxonomy_path(model_name)
@@ -586,7 +586,7 @@ def get_model_path(model_name):
     return os.path.abspath(path)
 
 
-def load_model(model_name, custom_objects=None):
+def load_classifier(model_name, custom_objects=None):
     """
     Loads bird species classification model of the given name.
 
@@ -600,7 +600,7 @@ def load_model(model_name, custom_objects=None):
 
     Returns
     -------
-    model : keras.models.Model
+    classifier : keras.models.Model
         Bird species classification model
 
     """
@@ -614,7 +614,7 @@ def load_model(model_name, custom_objects=None):
             # Suppress TF and Keras warnings when importing
             warnings.simplefilter("ignore")
             import keras
-            model = keras.models.load_model(
+            classifier = keras.models.load_model(
                 model_path, custom_objects=custom_objects)
     except Exception:
         exc_str = 'Could not open model "{}":\n{}'
@@ -622,7 +622,7 @@ def load_model(model_name, custom_objects=None):
         exc_formatted_str = exc_str.format(model_path, formatted_trace)
         raise BirdVoxClassifyError(exc_formatted_str)
 
-    return model
+    return classifier
 
 
 def get_taxonomy_path(model_name):
