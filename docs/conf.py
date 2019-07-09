@@ -31,6 +31,25 @@ copyright = '2019, Vincent Lostanlen, Justin Salamon, Andrew Farnsworth, Steve K
 author = 'Vincent Lostanlen, Justin Salamon, Andrew Farnsworth, Steve Kelling, and Juan Pablo Bello'
 
 
+# -- Mock dependencies
+if six.PY3:
+    from unittest.mock import MagicMock
+else:
+    from mock import Mock as MagicMock
+
+class Mock(MagicMock):
+    @classmethod
+    def getattr(cls, name):
+        return MagicMock()
+
+MOCK_MODULES = [
+    'numpy', 'soundfile', 'resampy', 'keras', 'tensorflow',
+    'librosa', 'keras.models'
+]
+
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
+
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
@@ -60,6 +79,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'numpydoc',
+    'sphinx_issues',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
