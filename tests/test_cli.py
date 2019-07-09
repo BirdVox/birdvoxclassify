@@ -135,7 +135,7 @@ def test_main(capsys):
 
     arg_list = ['birdvoxclassify',
                 CHIRP_PATH,
-                '-v'
+                '-v',
                 '--output-dir', tempdir]
     with patch('sys.argv', arg_list):
         main()
@@ -145,7 +145,7 @@ def test_main(capsys):
 
     arg_list = ['birdvoxclassify',
                 CHIRP_PATH,
-                '-q'
+                '-q',
                 '--output-dir', tempdir]
     with patch('sys.argv', arg_list):
         main()

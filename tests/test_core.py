@@ -209,9 +209,7 @@ def test_format_pred():
                           exp_output['fine'][ref_id]["probability"])
 
     # Test when we have a batch dimension of 1
-    pred = np.random.random((1, 15))
-    pred /= pred.sum()
-    pred_list = [pred]
+    pred_list = [pred[np.newaxis, :]]
 
     output = format_pred(pred_list, taxonomy)
     for ref_id in output_ids:
@@ -229,16 +227,12 @@ def test_format_pred():
                           exp_output['fine'][ref_id]["probability"])
 
     # Make sure we fail when batch dimension is greater than 1
-    pred = np.random.random((5, 15))
-    pred /= pred.sum()
-    pred_list = [pred]
+    pred_list = [np.tile(pred, (2, 1))]
     pytest.raises(BirdVoxClassifyError, format_pred, pred_list, taxonomy)
 
     # Make sure we fail with wrong taxonomy
     with open(TAXV1_HIERARCHICAL_PATH) as f:
         taxonomy = json.load(f)
-    pred = np.random.random((15,))
-    pred /= pred.sum()
     pred_list = [pred]
     pytest.raises(BirdVoxClassifyError, format_pred, pred_list, taxonomy)
 
