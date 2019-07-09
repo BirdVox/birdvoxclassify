@@ -39,6 +39,7 @@ def get_file_list(input_list):
 def run(inputs, output_dir=None, output_summary_path=None,
         classifier_name=DEFAULT_MODEL_NAME, batch_size=512, suffix="",
         logger_level=logging.INFO):
+    """Runs classification model on input audio clips"""
     # Set logger level.
     logging.getLogger().setLevel(logger_level)
 
@@ -77,6 +78,7 @@ def run(inputs, output_dir=None, output_summary_path=None,
 
 
 def parse_args(args):
+    """Parses CLI arguments"""
     parser = ArgumentParser(
         sys.argv[0],
         description=main.__doc__,
@@ -134,8 +136,8 @@ def parse_args(args):
 
 def main():
     """
-    Classifies nocturnal flight calls from audio by means of the BirdVoxClassify
-    deep learning model.
+    Classifies nocturnal flight calls from audio by means of the
+    BirdVoxClassify deep learning model.
     """
     args = parse_args(sys.argv[1:])
 

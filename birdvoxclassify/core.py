@@ -18,20 +18,57 @@ DEFAULT_MODEL_NAME = "birdvoxclassify-{}".format(DEFAULT_MODEL_SUFFIX)
 
 def process_file(filepaths, output_dir=None, output_summary_path=None,
                  classifier=None, taxonomy=None, batch_size=512, suffix='',
-                 logger_level=logging.INFO, classifier_name=DEFAULT_MODEL_NAME,
+                 logger_level=logging.INFO, model_name=DEFAULT_MODEL_NAME,
                  custom_objects=None):
+    """
+    Runs bird species classification model on one or more audio clips.
+
+    Parameters
+    ----------
+    filepaths : list or str
+        Filepath or list of filepaths of audio files for which to run prediction
+    output_dir : str or None [default: None]
+        Output directory used for outputting per-file prediction JSON files. If
+        `None`, no per-file prediction JSON files are produced.
+    output_summary_path : str or None [default: None]
+        Output path for summary prediction JSON file for all processed audio
+        files. If `None`, no summary prediction file is produced.
+    classifier : keras.models.Model or None [default: None]
+        Bird species classification model object. If `None`, the model
+        corresponding to `model_name` is loaded.
+    taxonomy : dict or None [default: None]
+        Taxonomy JSON object. If `None`, the taxonomy corresponding to
+        `model_name` is loaded.
+    batch_size : int [default: 512]
+        Batch size for predictions
+    suffix : str [default: ""]
+        String to append to filename
+    logger_level : int [default: logging.INFO]
+        Logger level
+    model_name : str [default birdvoxclassify.DEFAULT_MODEL_NAME]
+        Name of classifier model. Should be in format
+        `<model id>_<taxonomy version>-<taxonomy md5sum>`
+    custom_objects : dict[str, *] or None
+        Optional dictionary of custom Keras objects needed for model
+
+    Returns
+    -------
+    output_dict : dict[str, dict]
+        Output dictionary mapping audio filename to prediction dictionary, in
+        the format produced by `format_pred`.
+    """
     # Set logger level.
     logging.getLogger().setLevel(logger_level)
 
     # Print model.
-    logging.info("Loading model: {}".format(classifier_name))
+    logging.info("Loading model: {}".format(model_name))
 
     # Load the classifier.
     if classifier is None:
-        classifier = load_model(classifier_name, custom_objects=custom_objects)
+        classifier = load_model(model_name, custom_objects=custom_objects)
 
     if taxonomy is None:
-        taxonomy_path = get_taxonomy_path(classifier_name)
+        taxonomy_path = get_taxonomy_path(model_name)
         with open(taxonomy_path) as f:
             taxonomy = json.load(f)
 
@@ -74,6 +111,43 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
 
 
 def format_pred(pred_list, taxonomy):
+    """
+    Formats a list of predictions for a single audio clip into a more
+    human-readable JSON object using the given taxonomy object.
+
+    The output will be in the following format:
+
+    ```
+    {
+      <prediction level> : {
+        <taxonomy id> : {
+          "common_name": <str>,
+          "scientific_name": <str>,
+          "taxonomy_level_names": <str>,
+          "taxonomy_level_aliases": <dict of aliases>,
+          "child_ids": <list of children IDs>
+        },
+        ...
+      },
+      ...
+    }
+    ```
+
+    Parameters
+    ----------
+    pred_list : list[np.ndarray [shape (1, num_labels) or (num_labels,)]
+        List of predictions at the taxonomical levels predicted by the model
+        for a single example. `num_labels` may be different for each of the
+        different levels of the taxonomy.
+    taxonomy : dict
+        Taxonomy JSON object
+
+    Returns
+    -------
+    pred_dict : dict
+        Prediction dictionary object
+
+    """
     if len(pred_list) != len(taxonomy['output_encoding']):
         err_msg = "Taxonomy expects {} outputs but model produced {} outputs."
         raise BirdVoxClassifyError(err_msg.format(
@@ -118,6 +192,28 @@ def format_pred(pred_list, taxonomy):
 
 
 def format_pred_batch(batch_pred_list, taxonomy):
+    """
+    Formats a list of predictions for a batch of audio clips into a more
+    human-readable JSON object using the given taxonomy object. The output will
+    be in the form of a list of JSON objects in the format returned by
+    `format_pred`.
+
+
+    Parameters
+    ----------
+    batch_pred_list : list[np.ndarray [shape (batch_size, num_labels)] ]
+        List of predictions at the taxonomical levels predicted by the model
+        for a batch of examples. `num_labels` may be different for each of the
+        different levels of the taxonomy.
+    taxonomy : dict
+        Taxonomy JSON object
+
+    Returns
+    -------
+    pred_dict : list[dict]
+        List of JSON dictionary objects
+
+    """
     for level_pred in batch_pred_list:
         if len(level_pred) != len(batch_pred_list[0]):
             err_msg = 'Number of predictions for each level are not consistent.'
@@ -133,6 +229,23 @@ def format_pred_batch(batch_pred_list, taxonomy):
 
 
 def get_taxonomy_node(ref_id, taxonomy):
+    """
+    Gets node in taxonomy corresponding to the given reference ID (e.g. `1.4.1`)
+
+    Parameters
+    ----------
+    ref_id : str
+        Taxonomy reference ID
+    taxonomy : dict
+        Taxonomy JSON object
+
+    Returns
+    -------
+    node : dict[str, *]
+        Taxonomy node, containing information about the entity corresponding to
+        the given taxonomy reference ID
+
+    """
     if ref_id == 'other':
         return {"id": "other"}
 
@@ -149,6 +262,26 @@ def get_taxonomy_node(ref_id, taxonomy):
 
 
 def batch_generator(filepath_list, batch_size=512):
+    """
+    Returns a generator that, from a list of filepaths, yields batches of PCEN
+    images and the corresponding filenames.
+
+    Parameters
+    ----------
+    filepath_list : list[str]
+        (Non-empty) list of filepaths to audio files for which to generate
+        batches of PCEN images and the corresponding filenames
+    batch_size : int [default: 512]
+        Size of yielded batches
+
+    Yields
+    ------
+    batch : np.ndarray [shape: (batch_size, top_freq_id, n_hops, 1)]
+        PCEN batch
+    batch_filepaths : list[str]
+        List of filepaths corresponding to the clips in the batch
+
+    """
     if batch_size <= 0 or not isinstance(batch_size, int):
         err_msg = 'Batch size must be a positive integer. Got {}'
         raise BirdVoxClassifyError(err_msg.format(batch_size))
@@ -196,6 +329,31 @@ def batch_generator(filepath_list, batch_size=512):
 
 
 def compute_pcen(audio, sr, input_format=True):
+    """
+    Computes PCEN (per-channel-energy normalization) for the given audio clip.
+
+    Parameters
+    ----------
+    audio : np.ndarray [shape: (N,)]
+        Audio array
+    sr : int
+        Sample rate
+    input_format : bool [default: True]
+        If True, adds an additional channel dimension (of size 1) and ensures
+        that a fixed number of PCEN frames (corresponding to
+        `get_pcen_settings()['n_hops']`) is returned. If number of frames is
+        greater, the center frames are returned. If the the number of frames is
+        less, empty frames are padded.
+
+    Returns
+    -------
+    pcen : np.ndarray [shape: (top_freq_id, n_hops, 1) or (top_freq_id, num_frames)]
+        Per-channel energy normalization processed Mel spectrogram. If
+        `input_format=True`, will be in shape `(top_freq_id, n_hops, 1)`.
+        Otherwise it will be in shape `(top_freq_id, num_frames)`, where
+        `num_frames` is the number of PCEN frames for the entire audio clip.
+
+    """
     # Load settings.
     pcen_settings = get_pcen_settings()
 
@@ -283,6 +441,27 @@ def compute_pcen(audio, sr, input_format=True):
 
 
 def predict(pcen, classifier, logger_level=logging.INFO):
+    """
+    Performs bird species classification on PCEN arrays using the given model.
+
+    Parameters
+    ----------
+    pcen : np.ndarray [shape (n_mels, n_hops, 1) or (batch_size, n_mels, n_hops, 1)
+        PCEN array for a single clip or a batch of clips
+    classifier : keras.models.Model
+        Bird species classification model object
+    logger_level : int [default: logging.INFO]
+        Logger level
+
+    Returns
+    -------
+    pred_list : list[np.ndarray [shape (batch_size or 1, num_labels)] ]
+        List of predictions at the taxonomical levels predicted by the model.
+        num_labels may be different for each of the different levels of the
+        taxonomy. If a single example is given (i.e. there is no batch dimension
+        in the input PCEN), `batch_size = 1`.
+
+    """
     pcen_settings = get_pcen_settings()
 
     # Add batch dimension if we are classifying a single clip
@@ -322,6 +501,9 @@ def predict(pcen, classifier, logger_level=logging.INFO):
 
 def get_output_path(filepath, suffix, output_dir):
     """
+    Returns output path to file containing bird species classification
+    predictions for a given audio clip file.
+
     Parameters
     ----------
     filepath : str
@@ -331,6 +513,7 @@ def get_output_path(filepath, suffix, output_dir):
     output_dir : str or None
         Path to directory where file will be saved.
         If None, will use directory of given filepath.
+
     Returns
     -------
     output_path : str
@@ -349,6 +532,16 @@ def get_output_path(filepath, suffix, output_dir):
 
 
 def get_pcen_settings():
+    """
+    Returns dictionary of Mel spectrogram and PCEN parameters for preparing the
+    input to the bird species classification models.
+
+    Returns
+    -------
+    pcen_settings : dict[str, *]
+        Dictionary of Mel spectrogram and PCEN parameters
+
+    """
     pcen_settings = {
         "fmin": 2000,
         "fmax": 11025,
@@ -368,6 +561,22 @@ def get_pcen_settings():
 
 
 def get_model_path(model_name):
+    """
+    Returns path to the bird species classification model of the given name.
+
+    Parameters
+    ----------
+    model_name : str
+        Name of classifier model. Should be in format
+        `<model id>_<taxonomy version>-<taxonomy md5sum>`
+
+    Returns
+    -------
+    model_path : str
+        Path to classifier model weights. Should be in format
+        `<BirdVoxClassify dir>/resources/models/<model id>_<taxonomy version>-<taxonomy md5sum>.h5`
+
+    """
     path = os.path.join(os.path.dirname(__file__),
                         "..",
                         "resources",
@@ -377,12 +586,29 @@ def get_model_path(model_name):
     return os.path.abspath(path)
 
 
-def load_model(classifier_name, custom_objects=None):
-    model_path = get_model_path(classifier_name)
+def load_model(model_name, custom_objects=None):
+    """
+    Loads bird species classification model of the given name.
+
+    Parameters
+    ----------
+    model_name : str
+        Name of classifier model. Should be in format
+        `<model id>_<taxonomy version>-<taxonomy md5sum>`
+    custom_objects : dict[str, *] or None
+        Optional dictionary of custom Keras objects needed for model
+
+    Returns
+    -------
+    model : keras.models.Model
+        Bird species classification model
+
+    """
+    model_path = get_model_path(model_name)
 
     if not os.path.exists(model_path):
         raise BirdVoxClassifyError(
-            'Model "{}" could not be found.'.format(classifier_name))
+            'Model "{}" could not be found.'.format(model_name))
     try:
         with warnings.catch_warnings():
             # Suppress TF and Keras warnings when importing
@@ -400,6 +626,33 @@ def load_model(classifier_name, custom_objects=None):
 
 
 def get_taxonomy_path(model_name):
+    """
+    Get the path to the taxonomy corresponding to the model of the given name.
+
+    Specifically, with a model name of the format:
+
+    `<model id>_<taxonomy version>-<taxonomy md5sum>`
+
+    the path to taxonomy file
+    `<BirdVoxClassify dir>/resources/taxonomy/<taxonomy version>.json`
+    is returned. The MD5 checksum of this file is compared to <taxonomy md5sum>
+    to ensure that the content of the taxonomy file matches the format of the
+    output that the model is expected to produce.
+
+
+    Parameters
+    ----------
+    model_name : str
+        Name of model. Should be in format
+        `<model id>_<taxonomy version>-<taxonomy md5sum>`
+
+    Returns
+    -------
+    taxonomy_path : str
+        Path to taxonomy file, which should be in format
+        `<BirdVoxClassify dir>/resources/taxonomy/<taxonomy version>.json`
+
+    """
     taxonomy_version, exp_md5sum = model_name.split('_')[1].split('-')
     taxonomy_path = os.path.abspath(
                         os.path.join(
