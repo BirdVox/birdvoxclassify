@@ -141,8 +141,7 @@ def main():
 
     if args.version:
         print(birdvoxclassify.version.version)
-    elif not args.inputs:
-        print("BirdVoxClassify")
+        exit(0)
 
     if args.quiet:
         logger_level = 30

@@ -153,13 +153,6 @@ def test_main(capsys):
     outfile = os.path.join(tempdir, 'synth_chirp.json')
     assert os.path.isfile(outfile)
 
-    arg_list = ['birdvoxclassify']
-    with patch('sys.argv', arg_list):
-        main()
-    captured = capsys.readouterr()
-    expected_message = 'BirdVoxClassify\n'
-    assert captured.out == expected_message
-
     arg_list = ['birdvoxclassify', '-V']
     with patch('sys.argv', arg_list):
         main()
