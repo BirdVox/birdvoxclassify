@@ -122,6 +122,7 @@ def format_pred(pred_list, taxonomy):
         {
           <prediction level> : {
             <taxonomy id> : {
+              "probability": <float>,
               "common_name": <str>,
               "scientific_name": <str>,
               "taxonomy_level_names": <str>,

@@ -14,6 +14,7 @@ BirdVoxClassify
 
    installation
    tutorial
+   taxonomy
 
 
 BirdVoxClassify is an open-source Python library for classifying the species
