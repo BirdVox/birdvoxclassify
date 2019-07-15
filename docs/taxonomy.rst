@@ -6,7 +6,7 @@ BirdVoxClassify taxonomy
 Introduction
 ------------
 
-In the context of the BirdVox project `BirdVox <https://wp.nyu.edu/birdvox/>`_, we limit the scope
+In the context of the `BirdVox <https://wp.nyu.edu/birdvox/>`_ project, we limit the taxonomical scope
 to a subset of bird species. This subset is formalized via a taxonomy file which is used to both specify
 what species we are interested in as well as describing the output of a particular model using the
 taxonomy. In fact, model names refer to the taxonomy they use (as well as the MD5 checksum of the
@@ -116,7 +116,8 @@ The taxonomy is specified in JSON format. The taxonomy files can be found in
 The ``taxonomy`` field contains nodes of the tree of the taxonomy. each of which contain the N-digit taxonomy reference
 ID, identifying information and aliases about the node, and the IDs of children nodes in the taxonomy.
 ``output_encoding`` specifies the taxonomy IDs associated with each element of an output probability vector produced
-by a classifier using this taxonomy.
+by a classifier using this taxonomy. The order of the list associated with each level of the taxonomy
+corresponds to the position in an output vector.
 
 .. _output_format:
 
