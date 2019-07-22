@@ -1,6 +1,6 @@
 # BirdVoxClassify: species classification of bird flight calls
 
-An open-source Python library and command-line tool for automatically detecting bird flight calls in audio recordings.
+An open-source Python library and command-line tool for classifying bird species from flight calls in audio recordings.
 
 [![PyPI](https://img.shields.io/badge/python-3.5%2C%203.6-blue.svg)]()
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://choosealicense.com/licenses/mit/)
@@ -8,7 +8,7 @@ An open-source Python library and command-line tool for automatically detecting 
 [![Build Status](https://travis-ci.org/BirdVox/birdvoxclassify.svg?branch=master)](https://travis-ci.org/BirdVox/birdvoxclassify)
 [![Documentation Status](https://readthedocs.org/projects/birdvoxclassify/badge/?version=latest)](http://birdvoxclassify.readthedocs.io/en/latest/?badge=latest)
 
-BirdVoxClassify is a pre-trained deep learning system for classifying bird flight calls in short audio recordings.
+BirdVoxClassify is a pre-trained deep learning system for classifying bird species from flight calls in short audio recordings.
 It relies on per-channel energy normalization (PCEN) for improved robustness to background noise.
 It is made available both as a Python library and as a command-line tool for Windows, OS X, and Linux.
 
