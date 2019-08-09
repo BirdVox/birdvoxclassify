@@ -27,7 +27,7 @@ MODELS_DIR = os.path.join(RES_DIR, "models")
 TAXV1_HIERARCHICAL_PATH = os.path.join(TAX_DIR, "tv1hierarchical.json")
 TAXV1_FINE_PATH = os.path.join(TAX_DIR, "tv1fine.json")
 
-MODEL_SUFFIX = "flat-multitask-convnet_tv1hierarchical-a112ec5506b67d95109894a7dbfd186e"
+MODEL_SUFFIX = "flat-multitask-convnet_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc"
 MODEL_NAME = "birdvoxclassify-{}".format(MODEL_SUFFIX)
 
 
