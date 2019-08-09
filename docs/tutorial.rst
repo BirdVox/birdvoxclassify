@@ -1,7 +1,7 @@
 .. _tutorial:
 
 BirdVoxClassify tutorial
-===============
+========================
 
 Introduction
 ------------
@@ -19,6 +19,7 @@ You can simply compute bird species predictions out of the box, like so:
 .. code-block:: python
 
     import birdvoxclassify as bvc
+    import json
     filepath = '/path/to/file.wav'
     filepath_list = [
         '/path/to/file1.wav',
@@ -43,10 +44,10 @@ You can simply compute bird species predictions out of the box, like so:
     formatted_pred = process_file(filepath, model_name=bvc.DEFAULT_MODEL_NAME)
 
     # Pre-load model and taxonomy
-    model = bvc.load_model(bvc.DEFAULT_MODEL_NAME)
+    model = bvc.load_classifier(bvc.DEFAULT_MODEL_NAME)
     taxonomy_path = bvc.get_taxonomy_path(bvc.DEFAULT_MODEL_NAME)
     with open(taxonomy_path, 'r') as f:
-        taxonomy = taxonomy.load(f)
+        taxonomy = json.load(f)
     formatted_pred = process_file(filepath, classifier=model, taxonomy=taxonomy)
 
     # Change batch size depending on computational resources
@@ -65,10 +66,10 @@ You can also compute predictions directly on loaded audio arrays:
     audio, sr = sf.read('/path/to/file.wav')
     pcen = bvc.compute_pcen(audio, sr, input_format=True)
     # Load model and taxonomy
-    model = bvc.load_model(bvc.DEFAULT_MODEL_NAME)
+    model = bvc.load_classifier(bvc.DEFAULT_MODEL_NAME)
     taxonomy_path = bvc.get_taxonomy_path(bvc.DEFAULT_MODEL_NAME)
     with open(taxonomy_path, 'r') as f:
-        taxonomy = taxonomy.load(f)
+        taxonomy = json.load(f)
 
     # Get list of one-hot prediction array for each level of the taxonomy
     pred_list = bvc.predict(pcen, model)
