@@ -89,7 +89,7 @@ setup(
     },
     install_requires=[
         'keras>=2.2',
-        'librosa>=0.6.2',
+        'librosa==0.6.2',
         'numpy>=1.13.0',
         'scipy>=1.0.0',
         'PySoundFile>=0.9.0',
