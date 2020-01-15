@@ -11,7 +11,7 @@ import soundfile as sf
 
 from .birdvoxclassify_exceptions import BirdVoxClassifyError
 
-DEFAULT_MODEL_SUFFIX = "flat-multitask-convnet_" \
+DEFAULT_MODEL_SUFFIX = "flat-multitask-convnet-v2_" \
                        "tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc"
 DEFAULT_MODEL_NAME = "birdvoxclassify-{}".format(DEFAULT_MODEL_SUFFIX)
 
