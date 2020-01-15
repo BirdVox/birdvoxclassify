@@ -579,7 +579,6 @@ def get_model_path(model_name):
 
     """
     path = os.path.join(os.path.dirname(__file__),
-                        "..",
                         "resources",
                         "models",
                         model_name + '.h5')
@@ -658,7 +657,6 @@ def get_taxonomy_path(model_name):
     taxonomy_path = os.path.abspath(
                         os.path.join(
                             os.path.dirname(__file__),
-                            "..",
                             "resources",
                             "taxonomy",
                             taxonomy_version + '.json'))
