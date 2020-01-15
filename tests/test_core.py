@@ -21,7 +21,7 @@ MODULE_DIR = os.path.join(PROJECT_DIR, "birdvoxclassify")
 TEST_AUDIO_DIR = os.path.join(os.path.dirname(__file__), 'data/audio')
 CHIRP_PATH = os.path.join(TEST_AUDIO_DIR, 'synth_chirp.wav')
 
-RES_DIR = os.path.join(PROJECT_DIR, "resources")
+RES_DIR = os.path.join(MODULE_DIR, "resources")
 TAX_DIR = os.path.join(RES_DIR, "taxonomy")
 MODELS_DIR = os.path.join(RES_DIR, "models")
 TAXV1_HIERARCHICAL_PATH = os.path.join(TAX_DIR, "tv1hierarchical.json")
