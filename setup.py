@@ -8,7 +8,7 @@ try:
 except ImportError:
     from urllib import urlretrieve
 
-model_dir = os.path.join('resources', 'models')
+model_dir = os.path.join('birdvoxclassify', 'resources', 'models')
 suffixes = [
     'flat-multitask-convnet_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc'
 ]
@@ -112,7 +112,7 @@ setup(
     },
     package_data={
         'birdvoxclassify': [
-            os.path.join('models', fname)
+            os.path.join('resources', 'models', fname)
             for fname in weight_files
             ]
     }
