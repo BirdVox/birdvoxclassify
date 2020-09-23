@@ -615,7 +615,8 @@ def load_classifier(model_name, custom_objects=None):
             warnings.simplefilter("ignore")
             import keras
             classifier = keras.models.load_model(
-                model_path, custom_objects=custom_objects)
+                model_path, compile=False,
+                custom_objects=custom_objects)
     except Exception:
         exc_str = 'Could not open model "{}":\n{}'
         formatted_trace = traceback.format_exc()
