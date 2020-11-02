@@ -116,3 +116,6 @@ birdvoxclassify/models/*
 # BirdVoxClassify demo and notebooks
 demo/
 notebooks/
+
+# BirdVoxClassify models
+birdvoxclassify/resources/models/
