@@ -601,7 +601,6 @@ def test_get_model_path():
 
 def test_load_classifier():
     classifier = load_classifier(MODEL_NAME)
-    assert type(classifier) == keras.models.Model
 
     # Test invalid inputs
     invalid_path = get_model_path("invalid-classifier")
