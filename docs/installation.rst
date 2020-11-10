@@ -4,23 +4,6 @@ Installation instructions
 Dependencies
 ------------
 
-TensorFlow
-^^^^^^^^^^
-
-Because TensorFlow comes in CPU-only and GPU-enabled variants, we leave
-it up to the user to install the version that best fits their use case.
-
-On most platforms, either of the following commands should properly
-install TensorFlow:
-
-::
-
-   pip install tensorflow # CPU-only version
-   pip install tensorflow-gpu # GPU-enabled version
-
-For more detailed information, please consult the `installation
-instructions of TensorFlow`_.
-
 libsndfile (Linux only)
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -38,6 +21,12 @@ done by simply running
 
 For more detailed information, please consult the `installation
 instructions of pysoundfile`_.
+
+
+Note about TensorFlow:
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Please note that we explicitly require ``tensorflow==1.15.2`` to be consistent with `BirdVoxDetect` . We plan to move to TF 2.x in the future.
 
 Installing BirdVoxClassify
 ------------------------
@@ -66,5 +55,5 @@ To install the latest version of BirdVoxClassify from source:
        cd birdvoxclassify
        pip install -e .
 
-.. _installation instructions of TensorFlow: https://www.tensorflow.org/install/
 .. _installation instructions of pysoundfile: https://pysoundfile.readthedocs.io/en/0.9.0/#installation%3E
+.. _BirdVoxDetect: https://github.com/BirdVox/birdvoxdetect

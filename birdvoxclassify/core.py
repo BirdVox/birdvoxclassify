@@ -8,6 +8,16 @@ import os
 import warnings
 import traceback
 import soundfile as sf
+from contextlib import redirect_stderr
+
+with warnings.catch_warnings():
+    # Suppress TF and Keras warnings when importing
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+    warnings.simplefilter("ignore")
+    import tensorflow as tf
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+    with redirect_stderr(open(os.devnull, "w")):
+        from tensorflow import keras
 
 from .birdvoxclassify_exceptions import BirdVoxClassifyError
 
@@ -605,12 +615,7 @@ def load_classifier(model_name):
         raise BirdVoxClassifyError(
             'Model "{}" could not be found.'.format(model_name))
     try:
-        with warnings.catch_warnings():
-            # Suppress TF and Keras warnings when importing
-            warnings.simplefilter("ignore")
-            import keras
-            classifier = keras.models.load_model(
-                model_path, compile=False)
+        classifier = keras.models.load_model(model_path, compile=False)
     except Exception:
         exc_str = 'Could not open model "{}":\n{}'
         formatted_trace = traceback.format_exc()

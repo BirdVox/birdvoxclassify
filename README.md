@@ -17,17 +17,6 @@ It is made available both as a Python library and as a command-line tool for Win
 
 Dependencies
 ------------
-#### TensorFlow
-Because TensorFlow comes in CPU-only and GPU-enabled variants, we leave it up to the user to install the version that best fits
-their use case.
-
-On most platforms, either of the following commands should properly install TensorFlow:
-
-    pip install tensorflow # CPU-only version
-    pip install tensorflow-gpu # GPU-enabled version
-
-For more detailed information, please consult the
-[installation instructions of TensorFlow](https://www.tensorflow.org/install/).
 
 #### libsndfile (Linux only)
 BirdVoxClassify depends on the PySoundFile module to load audio files, which itself depends on the non-Python library libsndfile.
@@ -39,6 +28,9 @@ For Debian-based distributions (such as Ubuntu), this can be done by simply runn
 
 For more detailed information, please consult the
 [installation instructions of pysoundfile](https://pysoundfile.readthedocs.io/en/0.9.0/#installation>).
+
+#### Note about TensorFlow:
+Please note that we explicitly require `tensorflow==1.15.2` to be consistent with [BirdVoxDetect](https://github.com/BirdVox/birdvoxdetect). We plan to move to TF 2.x in the future.
 
 
 Installing BirdVoxClassify

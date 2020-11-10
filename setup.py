@@ -90,7 +90,6 @@ setup(
         'Tracker': 'https://github.com/BirdVox/birdvoxclassify/issues'
     },
     install_requires=[
-        'keras>=2.2',
         'librosa>=0.6.2',
         'numpy>=1.13.0',
         'scipy>=1.0.0',
@@ -98,6 +97,7 @@ setup(
         'resampy>=0.2.0',
         'h5py>=2.7.0',
         'pandas>=0.23',
+        'tensorflow==1.15.2',
         'six>=1.12.0'
     ],
     extras_require={
