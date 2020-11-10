@@ -18,8 +18,7 @@ DEFAULT_MODEL_NAME = "birdvoxclassify-{}".format(DEFAULT_MODEL_SUFFIX)
 
 def process_file(filepaths, output_dir=None, output_summary_path=None,
                  classifier=None, taxonomy=None, batch_size=512, suffix='',
-                 logger_level=logging.INFO, model_name=DEFAULT_MODEL_NAME,
-                 custom_objects=None):
+                 logger_level=logging.INFO, model_name=DEFAULT_MODEL_NAME):
     """
     Runs bird species classification model on one or more audio clips.
 
@@ -48,8 +47,6 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
     model_name : str [default birdvoxclassify.DEFAULT_MODEL_NAME]
         Name of classifier model. Should be in format
         ``<model id>_<taxonomy version>-<taxonomy md5sum>``
-    custom_objects : dict[str, *] or None
-        Optional dictionary of custom Keras objects needed for model
 
     Returns
     -------
@@ -65,7 +62,7 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
 
     # Load the classifier.
     if classifier is None:
-        classifier = load_classifier(model_name, custom_objects=custom_objects)
+        classifier = load_classifier(model_name)
 
     if taxonomy is None:
         taxonomy_path = get_taxonomy_path(model_name)
@@ -586,7 +583,7 @@ def get_model_path(model_name):
     return os.path.abspath(path)
 
 
-def load_classifier(model_name, custom_objects=None):
+def load_classifier(model_name):
     """
     Loads bird species classification model of the given name.
 
@@ -595,8 +592,6 @@ def load_classifier(model_name, custom_objects=None):
     model_name : str
         Name of classifier model. Should be in format
         ``<model id>_<taxonomy version>-<taxonomy md5sum>``
-    custom_objects : dict[str, *] or None
-        Optional dictionary of custom Keras objects needed for model
 
     Returns
     -------
@@ -615,8 +610,7 @@ def load_classifier(model_name, custom_objects=None):
             warnings.simplefilter("ignore")
             import keras
             classifier = keras.models.load_model(
-                model_path, compile=False,
-                custom_objects=custom_objects)
+                model_path, compile=False)
     except Exception:
         exc_str = 'Could not open model "{}":\n{}'
         formatted_trace = traceback.format_exc()
