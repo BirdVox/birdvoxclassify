@@ -326,7 +326,7 @@ def batch_generator(filepath_list, batch_size=512):
     if file_count > 0:
         yield np.vstack(batch), batch_filepaths
 
-    raise StopIteration
+    return
 
 
 def compute_pcen(audio, sr, input_format=True):
