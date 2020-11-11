@@ -82,9 +82,8 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
     ],
-    keywords='tfrecord',
+    keywords='bioacoustics, audio signal processing, machine learning',
     project_urls={
         'Source': 'https://github.com/BirdVox/birdvoxclassify',
         'Tracker': 'https://github.com/BirdVox/birdvoxclassify/issues'

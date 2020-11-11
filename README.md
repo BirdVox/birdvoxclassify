@@ -18,6 +18,10 @@ It is made available both as a Python library and as a command-line tool for Win
 Dependencies
 ------------
 
+
+#### Python Versions
+Currently, we support Python 3.6 and Python 3.7. Python 3.8 is not currently supported since TensorFlow 1.x is not supported for Python 3.8.
+
 #### libsndfile (Linux only)
 BirdVoxClassify depends on the PySoundFile module to load audio files, which itself depends on the non-Python library libsndfile.
 On Windows and Mac OS X, these will be installed automatically via the ``pip`` package manager and you can therefore skip this step.

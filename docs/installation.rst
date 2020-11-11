@@ -3,6 +3,9 @@ Installation instructions
 
 Dependencies
 ------------
+Python Versions
+^^^^^^^^^^^^^^^
+Currently, we support Python 3.6 and Python 3.7. Python 3.8 is not currently supported since TensorFlow 1.x is not supported for Python 3.8.
 
 libsndfile (Linux only)
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -35,7 +38,7 @@ The simplest way to install BirdVoxClassify is by using ``pip``, which
 will also install the additional required dependencies if needed. To
 install the latest stable version of BirdVoxClassify using ``pip``, simply
 run
-
+Oh, Pyth
 ::
 
    pip install birdvoxclassify
