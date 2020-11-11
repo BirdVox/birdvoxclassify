@@ -25,8 +25,8 @@ instructions of pysoundfile`_.
 
 Note about TensorFlow:
 ^^^^^^^^^^^^^^^^^^^^^^^
+We have dropped support for Tensorflow 1.x, and have moved to Tensorflow 2.x.
 
-Please note that we explicitly require ``tensorflow==1.15.2`` to be consistent with `BirdVoxDetect` . We plan to move to TF 2.x in the future.
 
 Installing BirdVoxClassify
 ------------------------
