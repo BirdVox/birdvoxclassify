@@ -1,17 +1,17 @@
-import pytest
+import hashlib
+import json
+import logging
 import os
+import pathlib
+import shutil
 import tempfile
+import pytest
 import numpy as np
 import soundfile as sf
-import json
-import hashlib
-import keras
-import logging
-import shutil
-import pathlib
 from scipy.signal.windows import get_window
 from six import string_types
 from numbers import Real
+
 from birdvoxclassify import *
 from birdvoxclassify.birdvoxclassify_exceptions import BirdVoxClassifyError
 
