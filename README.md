@@ -33,7 +33,7 @@ For more detailed information, please consult the
 [installation instructions of pysoundfile](https://pysoundfile.readthedocs.io/en/0.9.0/#installation>).
 
 #### Note about TensorFlow:
-Please note that we explicitly require `tensorflow==1.15.2` to be consistent with [BirdVoxDetect](https://github.com/BirdVox/birdvoxdetect). We plan to move to TF 2.x in the future.
+We have dropped support for Tensorflow 1.x, and have moved to Tensorflow 2.x.
 
 
 Installing BirdVoxClassify
