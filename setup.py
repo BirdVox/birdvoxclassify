@@ -11,11 +11,15 @@ except ImportError:
 model_dir = os.path.join('birdvoxclassify', 'resources', 'models')
 taxonomy_dir = os.path.join('birdvoxclassify', 'resources', 'taxonomy')
 suffixes = [
-    'flat-multitask-convnet_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc',
     'flat-multitask-convnet-v2_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc',
     'taxonet_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc'
 ]
-weight_files = ['birdvoxclassify-{}.h5'.format(suffix) for suffix in suffixes]
+
+model_prefix = 'birdvoxclassify'
+# Python 3.8 requires a different model for compatibility
+if sys.version_info.major == 3 and sys.version_info.minor == 8:
+    model_prefix += '-py3pt8'
+weight_files = [f'{model_prefix}-{suffix}.h5' for suffix in suffixes]
 base_url = 'https://github.com/BirdVox/birdvoxclassify/raw/models/'
 
 if len(sys.argv) > 1 and sys.argv[1] == 'sdist':
@@ -96,7 +100,7 @@ setup(
         'resampy>=0.2.0',
         'h5py>=2.7.0,<3.0.0',
         'pandas>=0.23',
-        'tensorflow==1.15.2',
+        'tensorflow>2.0.0',
         'six>=1.12.0'
     ],
     extras_require={
