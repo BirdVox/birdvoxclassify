@@ -4,6 +4,10 @@ Installation instructions
 Dependencies
 ------------
 
+Python Versions
+^^^^^^^^^^^^^^^
+Currently, we support Python 3.6, 3.7, and 3.8.
+
 libsndfile (Linux only)
 ^^^^^^^^^^^^^^^^^^^^^^^
 
