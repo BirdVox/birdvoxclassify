@@ -101,7 +101,7 @@ setup(
         'resampy>=0.2.0',
         'h5py>=2.7.0,<3.0.0',
         'pandas>=0.23',
-        'tensorflow>2.0.0',
+        'tensorflow>=2.0.0',
         'six>=1.12.0'
     ],
     extras_require={
