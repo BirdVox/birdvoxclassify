@@ -2,6 +2,7 @@ import librosa
 import logging
 import hashlib
 import json
+import sys
 import numpy as np
 import six
 import os
@@ -23,7 +24,11 @@ from .birdvoxclassify_exceptions import BirdVoxClassifyError
 
 DEFAULT_MODEL_SUFFIX = "taxonet_tv1hierarchical" \
                        "-2e7e1bbd434a35b3961e315cfe3832fc"
-DEFAULT_MODEL_NAME = "birdvoxclassify-{}".format(DEFAULT_MODEL_SUFFIX)
+model_prefix = 'birdvoxclassify'
+# Python 3.8 requires a different model for compatibility
+if sys.version_info.major == 3 and sys.version_info.minor == 8:
+    model_prefix += '-py3pt8'
+DEFAULT_MODEL_NAME = "{}-{}".format(model_prefix, DEFAULT_MODEL_SUFFIX)
 
 
 def process_file(filepaths, output_dir=None, output_summary_path=None,
