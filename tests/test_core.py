@@ -1,17 +1,18 @@
-import pytest
+import hashlib
+import json
+import logging
 import os
+import pathlib
+import shutil
+import sys
 import tempfile
+import pytest
 import numpy as np
 import soundfile as sf
-import json
-import hashlib
-import keras
-import logging
-import shutil
-import pathlib
 from scipy.signal.windows import get_window
 from six import string_types
 from numbers import Real
+
 from birdvoxclassify import *
 from birdvoxclassify.birdvoxclassify_exceptions import BirdVoxClassifyError
 
@@ -27,7 +28,8 @@ MODELS_DIR = os.path.join(RES_DIR, "models")
 TAXV1_HIERARCHICAL_PATH = os.path.join(TAX_DIR, "tv1hierarchical.json")
 TAXV1_FINE_PATH = os.path.join(TAX_DIR, "tv1fine.json")
 
-MODEL_SUFFIX = "flat-multitask-convnet-v2_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc"
+MODEL_SUFFIX = "flat-multitask-convnet-v2_" \
+               "tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc"
 MODEL_NAME = "birdvoxclassify-{}".format(MODEL_SUFFIX)
 
 
@@ -598,10 +600,19 @@ def test_get_model_path():
     model_path = get_model_path(test_model_name)
     assert os.path.abspath(model_path) == os.path.abspath(exp_model_path)
 
+    # Test Python 3.8 handling
+    test_model_name = "birdvoxclassify_test_model_name"
+    if sys.version_info.major == 3 and sys.version_info.minor == 8:
+        exp_test_model_name = "birdvoxclassify-py3pt8_test_model_name"
+    else:
+        exp_test_model_name = "birdvoxclassify_test_model_name"
+    exp_model_path = os.path.join(RES_DIR, "models", exp_test_model_name + '.h5')
+    model_path = get_model_path(test_model_name)
+    assert os.path.abspath(model_path) == os.path.abspath(exp_model_path)
+
 
 def test_load_classifier():
     classifier = load_classifier(MODEL_NAME)
-    assert type(classifier) == keras.models.Model
 
     # Test invalid inputs
     invalid_path = get_model_path("invalid-classifier")

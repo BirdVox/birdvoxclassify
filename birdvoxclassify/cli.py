@@ -1,11 +1,11 @@
 from __future__ import print_function
-from argparse import ArgumentParser, RawDescriptionHelpFormatter
-from collections import Iterable
 import logging
 import os
-from six import string_types
 import sys
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from collections import Iterable
 from pprint import pformat
+from six import string_types
 
 import birdvoxclassify
 from birdvoxclassify.core import DEFAULT_MODEL_NAME

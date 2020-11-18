@@ -17,17 +17,9 @@ It is made available both as a Python library and as a command-line tool for Win
 
 Dependencies
 ------------
-#### TensorFlow
-Because TensorFlow comes in CPU-only and GPU-enabled variants, we leave it up to the user to install the version that best fits
-their use case.
 
-On most platforms, either of the following commands should properly install TensorFlow:
-
-    pip install tensorflow # CPU-only version
-    pip install tensorflow-gpu # GPU-enabled version
-
-For more detailed information, please consult the
-[installation instructions of TensorFlow](https://www.tensorflow.org/install/).
+#### Python Versions
+Currently, we support Python 3.6, 3.7, and 3.8.
 
 #### libsndfile (Linux only)
 BirdVoxClassify depends on the PySoundFile module to load audio files, which itself depends on the non-Python library libsndfile.
@@ -39,6 +31,9 @@ For Debian-based distributions (such as Ubuntu), this can be done by simply runn
 
 For more detailed information, please consult the
 [installation instructions of pysoundfile](https://pysoundfile.readthedocs.io/en/0.9.0/#installation>).
+
+#### Note about TensorFlow:
+We have dropped support for Tensorflow 1.x, and have moved to Tensorflow 2.x.
 
 
 Installing BirdVoxClassify
@@ -56,3 +51,18 @@ To install the latest version of BirdVoxClassify from source:
 
         cd birdvoxclassify
         pip install -e .
+        
+        
+## Contact
+
+Jason Cramer, New York University (`@jtcramer` on GitHub).
+For more information on the BirdVox project, please visit our website: [https://wp.nyu.edu/birdvox](https://wp.nyu.edu/birdvox)
+
+See the [BirdVox Google Group](https://groups.google.com/g/birdvox) for questions and relevant discussion regarding BirdVox research and tools.
+
+Please cite the following paper when using BirdVoxClassify in your work:
+
+**[Chirping up the Right Tree: Incorporating Biological Taxonomies into Deep Bioacoustic Classifiers](https://www.justinsalamon.com/uploads/4/3/9/4/4394963/cramer_taxonet_icassp_2020.pdf)**<br/>
+Jason Cramer, Vincent Lostanlen, Andrew Farnsworth, Justin Salamon, and Juan Pablo Bello<br/>
+In IEEE International Conference on Acoustics, Speech, and Signal Processing (ICASSP), Barcelona, Spain, May 2020.
+        

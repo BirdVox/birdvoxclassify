@@ -11,11 +11,15 @@ except ImportError:
 model_dir = os.path.join('birdvoxclassify', 'resources', 'models')
 taxonomy_dir = os.path.join('birdvoxclassify', 'resources', 'taxonomy')
 suffixes = [
-    'flat-multitask-convnet_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc',
     'flat-multitask-convnet-v2_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc',
-    'taxonet_tv1hierarchical-7896de0a208a341730b315e90bf3e30f'
+    'taxonet_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc'
 ]
-weight_files = ['birdvoxclassify-{}.h5'.format(suffix) for suffix in suffixes]
+
+model_prefix = 'birdvoxclassify'
+# Python 3.8 requires a different model for compatibility
+if sys.version_info.major == 3 and sys.version_info.minor == 8:
+    model_prefix += '-py3pt8'
+weight_files = [f'{model_prefix}-{suffix}.h5' for suffix in suffixes]
 base_url = 'https://github.com/BirdVox/birdvoxclassify/raw/models/'
 
 if len(sys.argv) > 1 and sys.argv[1] == 'sdist':
@@ -79,26 +83,25 @@ setup(
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
         'Topic :: Multimedia :: Sound/Audio :: Analysis',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
-    keywords='tfrecord',
+    keywords='bioacoustics, audio signal processing, machine learning',
     project_urls={
         'Source': 'https://github.com/BirdVox/birdvoxclassify',
         'Tracker': 'https://github.com/BirdVox/birdvoxclassify/issues'
     },
     install_requires=[
-        'keras>=2.2',
         'librosa>=0.6.2',
         'numpy>=1.13.0',
         'scipy>=1.0.0',
         'PySoundFile>=0.9.0',
         'resampy>=0.2.0',
-        'h5py>=2.7.0',
+        'h5py>=2.7.0,<3.0.0',
         'pandas>=0.23',
+        'tensorflow>2.0.0',
         'six>=1.12.0'
     ],
     extras_require={

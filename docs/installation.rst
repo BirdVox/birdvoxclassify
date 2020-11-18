@@ -3,23 +3,13 @@ Installation instructions
 
 Dependencies
 ------------
+Python Versions
+^^^^^^^^^^^^^^^
+Currently, we support Python 3.6 and Python 3.7. Python 3.8 is not currently supported since TensorFlow 1.x is not supported for Python 3.8.
 
-TensorFlow
-^^^^^^^^^^
-
-Because TensorFlow comes in CPU-only and GPU-enabled variants, we leave
-it up to the user to install the version that best fits their use case.
-
-On most platforms, either of the following commands should properly
-install TensorFlow:
-
-::
-
-   pip install tensorflow # CPU-only version
-   pip install tensorflow-gpu # GPU-enabled version
-
-For more detailed information, please consult the `installation
-instructions of TensorFlow`_.
+Python Versions
+^^^^^^^^^^^^^^^
+Currently, we support Python 3.6, 3.7, and 3.8.
 
 libsndfile (Linux only)
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -39,6 +29,12 @@ done by simply running
 For more detailed information, please consult the `installation
 instructions of pysoundfile`_.
 
+
+Note about TensorFlow:
+^^^^^^^^^^^^^^^^^^^^^^^
+We have dropped support for Tensorflow 1.x, and have moved to Tensorflow 2.x.
+
+
 Installing BirdVoxClassify
 ------------------------
 
@@ -46,7 +42,7 @@ The simplest way to install BirdVoxClassify is by using ``pip``, which
 will also install the additional required dependencies if needed. To
 install the latest stable version of BirdVoxClassify using ``pip``, simply
 run
-
+Oh, Pyth
 ::
 
    pip install birdvoxclassify
@@ -66,5 +62,5 @@ To install the latest version of BirdVoxClassify from source:
        cd birdvoxclassify
        pip install -e .
 
-.. _installation instructions of TensorFlow: https://www.tensorflow.org/install/
 .. _installation instructions of pysoundfile: https://pysoundfile.readthedocs.io/en/0.9.0/#installation%3E
+.. _BirdVoxDetect: https://github.com/BirdVox/birdvoxdetect

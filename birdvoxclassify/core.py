@@ -2,24 +2,35 @@ import librosa
 import logging
 import hashlib
 import json
+import sys
 import numpy as np
 import six
 import os
 import warnings
 import traceback
 import soundfile as sf
+from contextlib import redirect_stderr
+
+with warnings.catch_warnings():
+    # Suppress TF and Keras warnings when importing
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+    warnings.simplefilter("ignore")
+    import tensorflow as tf
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+    with redirect_stderr(open(os.devnull, "w")):
+        from tensorflow import keras
 
 from .birdvoxclassify_exceptions import BirdVoxClassifyError
 
 DEFAULT_MODEL_SUFFIX = "taxonet_tv1hierarchical" \
-                       "-7896de0a208a341730b315e90bf3e30f"
-DEFAULT_MODEL_NAME = "birdvoxclassify-{}".format(DEFAULT_MODEL_SUFFIX)
+                       "-2e7e1bbd434a35b3961e315cfe3832fc"
+MODEL_PREFIX = 'birdvoxclassify'
+DEFAULT_MODEL_NAME = "{}-{}".format(MODEL_PREFIX, DEFAULT_MODEL_SUFFIX)
 
 
 def process_file(filepaths, output_dir=None, output_summary_path=None,
                  classifier=None, taxonomy=None, batch_size=512, suffix='',
-                 logger_level=logging.INFO, model_name=DEFAULT_MODEL_NAME,
-                 custom_objects=None):
+                 logger_level=logging.INFO, model_name=DEFAULT_MODEL_NAME):
     """
     Runs bird species classification model on one or more audio clips.
 
@@ -48,8 +59,6 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
     model_name : str [default birdvoxclassify.DEFAULT_MODEL_NAME]
         Name of classifier model. Should be in format
         ``<model id>_<taxonomy version>-<taxonomy md5sum>``
-    custom_objects : dict[str, *] or None
-        Optional dictionary of custom Keras objects needed for model
 
     Returns
     -------
@@ -65,7 +74,7 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
 
     # Load the classifier.
     if classifier is None:
-        classifier = load_classifier(model_name, custom_objects=custom_objects)
+        classifier = load_classifier(model_name)
 
     if taxonomy is None:
         taxonomy_path = get_taxonomy_path(model_name)
@@ -326,7 +335,7 @@ def batch_generator(filepath_list, batch_size=512):
     if file_count > 0:
         yield np.vstack(batch), batch_filepaths
 
-    raise StopIteration
+    return
 
 
 def compute_pcen(audio, sr, input_format=True):
@@ -578,6 +587,10 @@ def get_model_path(model_name):
         ``<BirdVoxClassify dir>/resources/models/<model id>_<taxonomy version>-<taxonomy md5sum>.h5``
 
     """
+    # Python 3.8 requires a different model for compatibility
+    if sys.version_info.major == 3 and sys.version_info.minor == 8:
+        model_name = model_name.replace(MODEL_PREFIX, MODEL_PREFIX + '-py3pt8')
+
     path = os.path.join(os.path.dirname(__file__),
                         "resources",
                         "models",
@@ -586,7 +599,7 @@ def get_model_path(model_name):
     return os.path.abspath(path)
 
 
-def load_classifier(model_name, custom_objects=None):
+def load_classifier(model_name):
     """
     Loads bird species classification model of the given name.
 
@@ -595,8 +608,6 @@ def load_classifier(model_name, custom_objects=None):
     model_name : str
         Name of classifier model. Should be in format
         ``<model id>_<taxonomy version>-<taxonomy md5sum>``
-    custom_objects : dict[str, *] or None
-        Optional dictionary of custom Keras objects needed for model
 
     Returns
     -------
@@ -610,13 +621,7 @@ def load_classifier(model_name, custom_objects=None):
         raise BirdVoxClassifyError(
             'Model "{}" could not be found.'.format(model_name))
     try:
-        with warnings.catch_warnings():
-            # Suppress TF and Keras warnings when importing
-            warnings.simplefilter("ignore")
-            import keras
-            classifier = keras.models.load_model(
-                model_path, compile=False,
-                custom_objects=custom_objects)
+        classifier = keras.models.load_model(model_path, compile=False)
     except Exception:
         exc_str = 'Could not open model "{}":\n{}'
         formatted_trace = traceback.format_exc()
