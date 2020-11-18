@@ -24,11 +24,8 @@ from .birdvoxclassify_exceptions import BirdVoxClassifyError
 
 DEFAULT_MODEL_SUFFIX = "taxonet_tv1hierarchical" \
                        "-2e7e1bbd434a35b3961e315cfe3832fc"
-model_prefix = 'birdvoxclassify'
-# Python 3.8 requires a different model for compatibility
-if sys.version_info.major == 3 and sys.version_info.minor == 8:
-    model_prefix += '-py3pt8'
-DEFAULT_MODEL_NAME = "{}-{}".format(model_prefix, DEFAULT_MODEL_SUFFIX)
+MODEL_PREFIX = 'birdvoxclassify'
+DEFAULT_MODEL_NAME = "birdvoxclassify-{}".format(MODEL_PREFIX, DEFAULT_MODEL_SUFFIX)
 
 
 def process_file(filepaths, output_dir=None, output_summary_path=None,
@@ -590,6 +587,10 @@ def get_model_path(model_name):
         ``<BirdVoxClassify dir>/resources/models/<model id>_<taxonomy version>-<taxonomy md5sum>.h5``
 
     """
+    # Python 3.8 requires a different model for compatibility
+    if sys.version_info.major == 3 and sys.version_info.minor == 8:
+        model_name = model_name.replace(MODEL_PREFIX, MODEL_PREFIX + '-py3pt8')
+
     path = os.path.join(os.path.dirname(__file__),
                         "resources",
                         "models",
