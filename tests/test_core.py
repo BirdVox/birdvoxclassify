@@ -601,11 +601,12 @@ def test_get_model_path():
     assert os.path.abspath(model_path) == os.path.abspath(exp_model_path)
 
     # Test Python 3.8 handling
+    test_model_name = "birdvoxclassify_test_model_name"
     if sys.version_info.major == 3 and sys.version_info.minor == 8:
-        test_model_name = "birdvoxclassify-py3pt8_test_model_name"
+        exp_test_model_name = "birdvoxclassify-py3pt8_test_model_name"
     else:
-        test_model_name = "birdvoxclassify_test_model_name"
-    exp_model_path = os.path.join(RES_DIR, "models", test_model_name + '.h5')
+        exp_test_model_name = "birdvoxclassify_test_model_name"
+    exp_model_path = os.path.join(RES_DIR, "models", exp_test_model_name + '.h5')
     model_path = get_model_path(test_model_name)
     assert os.path.abspath(model_path) == os.path.abspath(exp_model_path)
 
