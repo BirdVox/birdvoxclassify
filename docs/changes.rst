@@ -9,7 +9,7 @@ v0.2.0
 - Add models compatible with Python 3.8
 - Make TaxoNet the default model.
 - Fix broken dependencies.
-- Swap ``keras`` for ``tf.keras`` (``tensorflow==1.15.2``).
+- Swap ``keras`` for ``tf.keras`` and require Tensorflow 2.x.
 
 v0.1.1
 ~~~~~~
