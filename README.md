@@ -12,6 +12,7 @@ BirdVoxClassify is a pre-trained deep learning system for classifying bird speci
 It relies on per-channel energy normalization (PCEN) for improved robustness to background noise.
 It is made available both as a Python library and as a command-line tool for Windows, OS X, and Linux.
 
+The code used to train these models can be found at [this repository](https://github.com/BirdVox/cramer2020icassp).
 
 # Installation instructions
 
