@@ -25,7 +25,7 @@ from .birdvoxclassify_exceptions import BirdVoxClassifyError
 DEFAULT_MODEL_SUFFIX = "taxonet_tv1hierarchical" \
                        "-2e7e1bbd434a35b3961e315cfe3832fc"
 MODEL_PREFIX = 'birdvoxclassify'
-DEFAULT_MODEL_NAME = "birdvoxclassify-{}".format(MODEL_PREFIX, DEFAULT_MODEL_SUFFIX)
+DEFAULT_MODEL_NAME = "{}-{}".format(MODEL_PREFIX, DEFAULT_MODEL_SUFFIX)
 
 
 def process_file(filepaths, output_dir=None, output_summary_path=None,
