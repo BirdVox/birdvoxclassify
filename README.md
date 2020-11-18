@@ -51,3 +51,18 @@ To install the latest version of BirdVoxClassify from source:
 
         cd birdvoxclassify
         pip install -e .
+        
+        
+## Contact
+
+Jason Cramer, New York University (`@jtcramer` on GitHub).
+For more information on the BirdVox project, please visit our website: [https://wp.nyu.edu/birdvox](https://wp.nyu.edu/birdvox)
+
+See the [BirdVox Google Group](https://groups.google.com/g/birdvox) for questions and relevant discussion regarding BirdVox research and tools.
+
+Please cite the following paper when using BirdVoxClassify in your work:
+
+**[Chirping up the Right Tree: Incorporating Biological Taxonomies into Deep Bioacoustic Classifiers](https://www.justinsalamon.com/uploads/4/3/9/4/4394963/cramer_taxonet_icassp_2020.pdf)**<br/>
+Jason Cramer, Vincent Lostanlen, Andrew Farnsworth, Justin Salamon, and Juan Pablo Bello<br/>
+In IEEE International Conference on Acoustics, Speech, and Signal Processing (ICASSP), Barcelona, Spain, May 2020.
+        
