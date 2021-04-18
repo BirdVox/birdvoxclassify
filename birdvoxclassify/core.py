@@ -5,6 +5,7 @@ import json
 import sys
 import numpy as np
 import six
+import operator
 import os
 import warnings
 import traceback
@@ -78,7 +79,7 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
 
     if taxonomy is None:
         taxonomy_path = get_taxonomy_path(model_name)
-        with open(taxonomy_path) as f:
+        with open(taxonomy_path, 'r') as f:
             taxonomy = json.load(f)
 
     # Create output_dir if necessary.
@@ -154,22 +155,16 @@ def format_pred(pred_list, taxonomy):
 
     Returns
     -------
-    pred_dict : dict
+    formatted_pred_dict : dict
         Prediction dictionary object
 
     """
-    if len(pred_list) != len(taxonomy['output_encoding']):
-        err_msg = "Taxonomy expects {} outputs but model produced {} outputs."
-        raise BirdVoxClassifyError(err_msg.format(
-            len(taxonomy['output_encoding']), len(pred_list)
-        ))
-
-    pred_dict = {}
-
+    _validate_pred_list(pred_list, taxonomy)
+    formatted_pred_dict = {}
     encoding_items = taxonomy['output_encoding'].items()
     for pred, (level, encoding_list) in zip(pred_list, encoding_items):
 
-        pred_dict[level] = {}
+        formatted_pred_dict[level] = {}
 
         if pred.ndim == 2:
             if pred.shape[0] != 1:
@@ -179,18 +174,23 @@ def format_pred(pred_list, taxonomy):
             pred = pred.flatten()
 
         for prob, item in zip(pred, encoding_list):
+            # Assumption: only "other" class has more than one ref id
+            # Get reference id
             if len(item['ids']) == 1:
                 ref_id = item['ids'][0]
             else:
                 ref_id = "other"
 
-            pred_dict[level][ref_id] = {'probability': float(prob)}
+            # Set probability
+            formatted_pred_dict[level][ref_id] = {'probability': float(prob)}
 
             if ref_id != "other":
-                pred_dict[level][ref_id].update(get_taxonomy_node(ref_id,
-                                                                  taxonomy))
+                # Update dictionary with taxonomy information
+                formatted_pred_dict[level][ref_id].update(
+                    get_taxonomy_node(ref_id, taxonomy))
             else:
-                pred_dict[level][ref_id].update({
+                # Update dictionary with "other" taxonomy information
+                formatted_pred_dict[level][ref_id].update({
                     "common_name": "other",
                     "scientific_name": "other",
                     "taxonomy_level_names": level,
@@ -198,7 +198,22 @@ def format_pred(pred_list, taxonomy):
                     "child_ids": item['ids']
                 })
 
-    return pred_dict
+    return formatted_pred_dict
+
+
+def _validate_batch_pred_list(batch_pred_list):
+    for level_pred in batch_pred_list:
+        if len(level_pred) != len(batch_pred_list[0]):
+            err_msg = 'Number of predictions for each level are not consistent.'
+            raise BirdVoxClassifyError(err_msg)
+
+
+def _validate_pred_list(pred_list, taxonomy):
+    if len(pred_list) != len(taxonomy['output_encoding']):
+        err_msg = "Taxonomy expects {} outputs but model produced {} outputs."
+        raise BirdVoxClassifyError(err_msg.format(
+            len(taxonomy['output_encoding']), len(pred_list)
+        ))
 
 
 def format_pred_batch(batch_pred_list, taxonomy):
@@ -224,11 +239,7 @@ def format_pred_batch(batch_pred_list, taxonomy):
         List of JSON dictionary objects
 
     """
-    for level_pred in batch_pred_list:
-        if len(level_pred) != len(batch_pred_list[0]):
-            err_msg = 'Number of predictions for each level are not consistent.'
-            raise BirdVoxClassifyError(err_msg)
-
+    _validate_batch_pred_list(batch_pred_list)
     pred_dict_list = []
     for idx in range(len(batch_pred_list[0])):
         pred_list = [p[idx] for p in batch_pred_list]
@@ -681,3 +692,123 @@ def get_taxonomy_path(model_name):
         ))
 
     return taxonomy_path
+
+
+def get_batch_best_candidates(batch_pred_list=None, batch_formatted_pred_list=None, taxonomy=None, hierarchical_consistency=False):
+    assert bool(batch_pred_list) != bool(batch_formatted_pred_list)
+    assert bool(taxonomy) == bool(hierarchical_consistency)
+    if batch_formatted_pred_list is None:
+        batch_formatted_pred_list = format_pred_batch(batch_pred_list, taxonomy)
+
+    batch_best_candidates_list = []
+    for formatted_pred_dict in batch_formatted_pred_list:
+        best_candidate_dict = get_best_candidates(
+            formatted_pred_dict=formatted_pred_dict, taxonomy=taxonomy,
+            hierarchical_consistency=hierarchical_consistency)
+        batch_best_candidates_list.append(best_candidate_dict)
+    return batch_best_candidates_list
+
+
+def get_best_candidates(pred_list=None, formatted_pred_dict=None, taxonomy=None,
+                        hierarchical_consistency=False):
+    assert bool(pred_list) != bool(formatted_pred_dict)
+    assert bool(taxonomy) == bool(hierarchical_consistency)
+
+    if formatted_pred_dict is None:
+        # Format prediction if not provided
+        formatted_pred_dict = format_pred(pred_list, taxonomy)
+
+    if hierarchical_consistency:
+        return apply_hierarchical_consistency(formatted_pred_dict, taxonomy)
+    else:
+        # Simply get the taxon dict w/ maximum probability, with no
+        # consistency enforced
+        return {level: max(taxon_dict.values(),
+                           key=operator.itemgetter('probability'))
+                for level, taxon_dict in formatted_pred_dict.items()}
+
+
+def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
+                                   level_threshold_dict=None,
+                                   detection_threshold=0.5):
+    _validate_pred_list(formatted_pred_dict, taxonomy)
+
+    # Assumption: "output_encoding" contains hierarchy levels in order from
+    # coarsest to finest
+    taxon_levels = list(taxonomy["output_encoding"].keys())
+
+    # Set thresholds. Note: a threshold of 0.5 corresponds to comparing the
+    # argmax in-vocab class with "other" defined by 1 - max
+    if level_threshold_dict is not None:
+        assert set(taxon_levels) == set(level_threshold_dict.keys())
+    else:
+        assert 0 < detection_threshold < 1
+        level_threshold_dict = {level: detection_threshold
+                                for level in taxon_levels}
+
+    best_candidate_dict = {}
+    prev_level = None
+    other_reached = False
+    for level in taxon_levels:
+        other_dict =_get_other_dict(formatted_pred_dict[level])
+        # Get maximum in-vocab dict
+        invocab_cand_dict = \
+            max([taxon_dict
+                 for taxon_dict in formatted_pred_dict[level].values()
+                 if 'id' in taxon_dict],
+                key=operator.itemgetter('probability'))
+        # Sanity check: make sure "other" probability is 1 - max in-vocab probability
+        assert np.isclose(other_dict['probability'],
+                          1 - invocab_cand_dict['probability'])
+
+        if not other_reached:
+            if prev_level is not None:
+                # Prev level's candidate assumed not to be "other" here
+                prev_cand_dict = best_candidate_dict[prev_level]
+                # Get most probable "hierarchically consistent" dict
+                hc_cand_dict \
+                    = max([taxon_dict
+                           for taxon_dict in formatted_pred_dict[level].values()
+                           # Make sure not "other"
+                           if 'id' in taxon_dict
+                           # Make sure prev level cand's child ids subsume
+                           # the taxon child ids
+                           and set(prev_cand_dict['child_ids']).issuperset(
+                                taxon_dict['child_ids']
+                                if len(taxon_dict['child_ids']) > 0
+                                # Handle leaf case (i.e. no children)
+                                else {taxon_dict['id']})],
+                          key=operator.itemgetter('probability'))
+                # Correct candidate to be hierarchically consistent
+                invocab_cand_dict = hc_cand_dict
+
+            if invocab_cand_dict['probability'] > level_threshold_dict[level]:
+                # If most probable class likelihood is above threshold,
+                # accept it as best cand
+                best_candidate_dict[level] = invocab_cand_dict
+            else:
+                # Otherwise, use "other" as best cand
+                best_candidate_dict[level] = dict(other_dict)
+                # Make sure that probability is adjusted to correspond
+                # to cand in-vocab class
+                best_candidate_dict[level]['probability'] \
+                    = 1 - invocab_cand_dict['probability']
+                other_reached = True
+        else:
+            # If a previous level was already "other", so impose that this level
+            # is also "other"
+            best_candidate_dict[level] = other_dict
+
+        prev_level = level
+
+    return best_candidate_dict
+
+
+def _get_other_dict(level_dict):
+    # Get other dict
+    other_dict_list = [taxon_dict
+                       for taxon_dict in level_dict.values()
+                       if 'id' not in taxon_dict]
+    # Sanity check: there should be exactly one other taxon dict
+    assert len(other_dict_list) == 1
+    return other_dict_list[0]
