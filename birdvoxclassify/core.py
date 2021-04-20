@@ -694,7 +694,34 @@ def get_taxonomy_path(model_name):
     return taxonomy_path
 
 
-def get_batch_best_candidates(batch_pred_list=None, batch_formatted_pred_list=None, taxonomy=None, hierarchical_consistency=False):
+def get_batch_best_candidates(batch_pred_list=None,
+                              batch_formatted_pred_list=None,
+                              taxonomy=None,
+                              hierarchical_consistency=False):
+    """
+    Obtain the best candidate classes for each prediction in a batch.
+
+    Parameters
+    ----------
+    batch_pred_list : list or None [default: None]
+        List of batch predictions. If not provided,
+        ``batch_formatted_pred_list`` must be provided.
+    batch_formatted_pred_list : list or None [default: None]
+        List of formatted batch predictions. If not provided,
+        ``batch_pred_list`` must be provided.
+    taxonomy : dict or None [default: None]
+        Taxonomy JSON object used to apply hierarchical consistency.
+        If ``None``, then ``hierarchical_consistency`` must be ``False``.
+    hierarchical_consistency : bool [default: False]
+        If ``True``, apply hierarchical consistency to predictions.
+
+    Returns
+    -------
+    batch_best_candidates_list : list
+        List of formatted dictionaries specifying the best candidates
+        for each taxonomic level.
+
+    """
     assert bool(batch_pred_list) != bool(batch_formatted_pred_list)
     assert bool(taxonomy) == bool(hierarchical_consistency)
     if batch_formatted_pred_list is None:
@@ -711,6 +738,45 @@ def get_batch_best_candidates(batch_pred_list=None, batch_formatted_pred_list=No
 
 def get_best_candidates(pred_list=None, formatted_pred_dict=None, taxonomy=None,
                         hierarchical_consistency=False):
+    """
+    Obtain the best predicted candidate class for a prediction at all
+    taxonomic levels. The output will be in the following format:
+
+    .. code-block:: javascript
+
+        {
+          <prediction level> : {
+            "probability": <float>,
+            "common_name": <str>,
+            "scientific_name": <str>,
+            "taxonomy_level_names": <str>,
+            "taxonomy_level_aliases": <dict of aliases>,
+            "child_ids": <list of children IDs>
+          },
+          ...
+        }
+
+    Parameters
+    ----------
+    pred_list : list or None [default: None]
+        List of predictions. If not provided,
+        ``formatted_pred_dict`` must be provided.
+    formatted_pred_dict : dict or None [default: None]
+        Formatted dictionary of predictions. If not provided,
+        ``pred_list`` must be provided.
+    taxonomy : dict or None [default: None]
+        Taxonomy JSON object used to apply hierarchical consistency.
+        If ``None``, then ``hierarchical_consistency`` must be ``False``.
+    hierarchical_consistency : bool [default: False]
+        If ``True``, apply hierarchical consistency to predictions.
+
+    Returns
+    -------
+    best_candidates_dict : dict
+        Formatted dictionary specifying the best candidate
+        for each taxonomic level.
+
+    """
     assert bool(pred_list) != bool(formatted_pred_dict)
     assert bool(taxonomy) == bool(hierarchical_consistency)
 
@@ -731,6 +797,42 @@ def get_best_candidates(pred_list=None, formatted_pred_dict=None, taxonomy=None,
 def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
                                    level_threshold_dict=None,
                                    detection_threshold=0.5):
+    """
+    Obtain the best predicted candidate class for a prediction at all
+    taxonomic levels, enforcing "top-down" hierarchical consistency.
+    That is, starting from the "coarsest" taxonomic level, if the most
+    probable class is considered "present" (estimated probability
+    greater than a threshold), it is considered the best candidate
+    for that level, and only taxonomic children of this class
+    will be considered when choosing candidates for "finer" taxonomic
+    levels. If the most probable class is not considered "present"
+    (estimated probability below the same threshold), then
+    the "other" class is chosen as the best candidate, with the
+    probability assigned to be the complement of the most probable
+    "consistent" class.
+
+    Parameters
+    ----------
+    formatted_pred_dict : dict
+        Formatted dictionary of predictions.
+    taxonomy : dict or None [default: None]
+        Taxonomy JSON object used to apply hierarchical consistency.
+        If ``None``, then ``hierarchical_consistency`` must be ``False``.
+    level_threshold_dict : dict or None [default: None]
+        Optional dictionary of detection thresholds for each
+        taxonomic level.
+    detection_threshold : float [default: 0.5]
+        Detection threshold applied uniformly to all classes
+        at all levels. If ``level_threshold_dict`` is provided, this
+        is ignored.
+
+    Returns
+    -------
+    best_candidates_dict : dict
+        Formatted dictionary specifying the best candidate
+        for each taxonomic level.
+
+    """
     _validate_pred_list(formatted_pred_dict, taxonomy)
 
     # Assumption: "output_encoding" contains hierarchy levels in order from
@@ -771,8 +873,8 @@ def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
                            for taxon_dict in formatted_pred_dict[level].values()
                            # Make sure not "other"
                            if 'id' in taxon_dict
-                           # Make sure prev level cand's child ids subsume
-                           # the taxon child ids
+                           # Make sure prev level candidate's leaf ids subsume
+                           # the taxon leaf ids
                            and set(prev_cand_dict['child_ids']).issuperset(
                                 taxon_dict['child_ids']
                                 if len(taxon_dict['child_ids']) > 0
@@ -784,13 +886,13 @@ def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
 
             if invocab_cand_dict['probability'] > level_threshold_dict[level]:
                 # If most probable class likelihood is above threshold,
-                # accept it as best cand
+                # accept it as best candidate
                 best_candidate_dict[level] = invocab_cand_dict
             else:
-                # Otherwise, use "other" as best cand
+                # Otherwise, use "other" as best candidate
                 best_candidate_dict[level] = dict(other_dict)
                 # Make sure that probability is adjusted to correspond
-                # to cand in-vocab class
+                # to candidate in-vocab class
                 best_candidate_dict[level]['probability'] \
                     = 1 - invocab_cand_dict['probability']
                 other_reached = True
@@ -805,6 +907,21 @@ def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
 
 
 def _get_other_dict(level_dict):
+    """
+    Get the element corresponding to "other" in the given formatted
+    level dictionary.
+
+    Parameters
+    ----------
+    level_dict : dict
+        Level dictionary from a formatted prediction dictionary
+
+    Returns
+    -------
+    other_dict : dict
+        Formatted taxon prediction dictionary corresponding to "other"
+
+    """
     # Get other dict
     other_dict_list = [taxon_dict
                        for taxon_dict in level_dict.values()
