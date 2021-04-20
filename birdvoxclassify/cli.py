@@ -5,7 +5,6 @@ import sys
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from collections import Iterable
 from pprint import pformat
-from six import string_types
 
 import birdvoxclassify
 from birdvoxclassify.core import DEFAULT_MODEL_NAME
@@ -18,7 +17,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 def get_file_list(input_list):
     """Parse list of input paths."""
     if not isinstance(input_list, Iterable)\
-            or isinstance(input_list, string_types):
+            or isinstance(input_list, str):
         raise BirdVoxClassifyError('input_list must be a non-string iterable')
     file_list = []
     for item in input_list:
@@ -43,7 +42,7 @@ def run(inputs, output_dir=None, output_summary_path=None,
     # Set logger level.
     logging.getLogger().setLevel(logger_level)
 
-    if isinstance(inputs, string_types):
+    if isinstance(inputs, str):
         file_list = [inputs]
     elif isinstance(inputs, Iterable):
         file_list = get_file_list(inputs)

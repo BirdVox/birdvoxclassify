@@ -4,7 +4,6 @@ import hashlib
 import json
 import sys
 import numpy as np
-import six
 import operator
 import os
 import warnings
@@ -87,7 +86,7 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-    if isinstance(filepaths, six.string_types):
+    if isinstance(filepaths, str):
         filepaths = [filepaths]
 
     batch_gen = batch_generator(filepaths, batch_size=batch_size)
