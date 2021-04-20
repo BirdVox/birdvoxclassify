@@ -201,6 +201,19 @@ def format_pred(pred_list, taxonomy):
 
 
 def _validate_batch_pred_list(batch_pred_list):
+    """
+    Perform sanity check on a list of batch predictions to ensure that the
+    number of predictions for each level are consistent.
+
+
+    Parameters
+    ----------
+    batch_pred_list : list[np.ndarray [shape (batch_size, num_labels)] ]
+        List of predictions at the taxonomical levels predicted by the model
+        for a batch of examples. ``num_labels`` may be different for each of the
+        different levels of the taxonomy.
+
+    """
     for level_pred in batch_pred_list:
         if len(level_pred) != len(batch_pred_list[0]):
             err_msg = 'Number of predictions for each level are not consistent.'
@@ -208,6 +221,21 @@ def _validate_batch_pred_list(batch_pred_list):
 
 
 def _validate_pred_list(pred_list, taxonomy):
+    """
+    Perform sanity check on a list of predictions to ensure that the number of
+    classes in each prediction are consistent with the given taxonomy.
+
+
+    Parameters
+    ----------
+    pred_list : list[np.ndarray [shape (1, num_labels) or (num_labels,)]
+        List of predictions at the taxonomical levels predicted by the model
+        for a single example.
+    taxonomy : dict or None [default: None]
+        Taxonomy JSON object used to apply hierarchical consistency.
+        If ``None``, then ``hierarchical_consistency`` must be ``False``.
+
+    """
     if len(pred_list) != len(taxonomy['output_encoding']):
         err_msg = "Taxonomy expects {} outputs but model produced {} outputs."
         raise BirdVoxClassifyError(err_msg.format(
@@ -757,8 +785,9 @@ def get_best_candidates(pred_list=None, formatted_pred_dict=None, taxonomy=None,
 
     Parameters
     ----------
-    pred_list : list or None [default: None]
-        List of predictions. If not provided,
+    pred_list : list[np.ndarray [shape (1, num_labels) or (num_labels,)] or None [default: None]
+        List of predictions at the taxonomical levels predicted by the model
+        for a single example. If not provided,
         ``formatted_pred_dict`` must be provided.
     formatted_pred_dict : dict or None [default: None]
         Formatted dictionary of predictions. If not provided,
