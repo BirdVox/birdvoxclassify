@@ -749,8 +749,15 @@ def get_batch_best_candidates(batch_pred_list=None,
         for each taxonomic level.
 
     """
-    assert bool(batch_pred_list) != bool(batch_formatted_pred_list)
-    assert bool(taxonomy) == bool(hierarchical_consistency)
+    if (batch_pred_list is not None) == (batch_formatted_pred_list is not None):
+        err_msg = "Both batch_pred_list and batch_formatted_pred_dict were, " \
+                  "provided, but only one can be provided."
+        raise BirdVoxClassifyError(err_msg)
+
+    if hierarchical_consistency and taxonomy is None:
+        err_msg = "Must provide taxonomy if hierarchical consistency is applied."
+        raise BirdVoxClassifyError(err_msg)
+
     if batch_formatted_pred_list is None:
         batch_formatted_pred_list = format_pred_batch(batch_pred_list, taxonomy)
 
@@ -805,8 +812,14 @@ def get_best_candidates(pred_list=None, formatted_pred_dict=None, taxonomy=None,
         for each taxonomic level.
 
     """
-    assert bool(pred_list) != bool(formatted_pred_dict)
-    assert bool(taxonomy) == bool(hierarchical_consistency)
+    if (pred_list is not None) == (formatted_pred_dict is not None):
+        err_msg = "Both pred_list and formatted_pred_dict were provided, " \
+                  "but only one can be provided."
+        raise BirdVoxClassifyError(err_msg)
+
+    if hierarchical_consistency and taxonomy is None:
+        err_msg = "Must provide taxonomy if hierarchical consistency is applied."
+        raise BirdVoxClassifyError(err_msg)
 
     if formatted_pred_dict is None:
         # Format prediction if not provided
@@ -879,8 +892,8 @@ def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
     best_candidate_dict = {}
     prev_level = None
     other_reached = False
-    for level in taxon_levels:
-        other_dict =_get_other_dict(formatted_pred_dict[level])
+    for level_idx, level in enumerate(taxon_levels):
+        other_dict = formatted_pred_dict[level]["other"]
         # Get maximum in-vocab dict
         invocab_cand_dict = \
             max([taxon_dict
@@ -928,32 +941,11 @@ def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
             # If a previous level was already "other", so impose that this level
             # is also "other"
             best_candidate_dict[level] = other_dict
+            # The probability is adjusted to the "other" probability from the
+            # previous level
+            best_candidate_dict[level]['probability'] \
+                = best_candidate_dict[taxon_levels[level_idx-1]]['probability']
 
         prev_level = level
 
     return best_candidate_dict
-
-
-def _get_other_dict(level_dict):
-    """
-    Get the element corresponding to "other" in the given formatted
-    level dictionary.
-
-    Parameters
-    ----------
-    level_dict : dict
-        Level dictionary from a formatted prediction dictionary
-
-    Returns
-    -------
-    other_dict : dict
-        Formatted taxon prediction dictionary corresponding to "other"
-
-    """
-    # Get other dict
-    other_dict_list = [taxon_dict
-                       for taxon_dict in level_dict.values()
-                       if 'id' not in taxon_dict]
-    # Sanity check: there should be exactly one other taxon dict
-    assert len(other_dict_list) == 1
-    return other_dict_list[0]
