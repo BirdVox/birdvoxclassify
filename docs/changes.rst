@@ -2,6 +2,12 @@
 
 Changelog
 ---------
+v0.2.1
+~~~~~~
+- Add functionality for obtaining best candidates
+- Add hierarchical consistency implementation for selecting best candidates
+- Drop ``six`` dependency.
+
 v0.2.0
 ~~~~~~
 - Drop support for Python 3.5, add support for Python 3.7 and 3.8.
