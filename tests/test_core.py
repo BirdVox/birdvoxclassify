@@ -15,7 +15,7 @@ from numbers import Real
 
 from birdvoxclassify import *
 from birdvoxclassify.core import apply_hierarchical_consistency, \
-                                 _validate_pred_list, \
+                                 _validate_prediction, \
                                  _validate_batch_pred_list
 from birdvoxclassify.birdvoxclassify_exceptions import BirdVoxClassifyError
 
@@ -40,8 +40,7 @@ def test_process_file():
     test_output_dir = tempfile.mkdtemp()
     test_audio_dir = tempfile.mkdtemp()
     classifier = load_classifier(MODEL_NAME)
-    with open(TAXV1_HIERARCHICAL_PATH) as f:
-        taxonomy = json.load(f)
+    taxonomy = load_taxonomy(TAXV1_HIERARCHICAL_PATH)
     test_output_summary_path = os.path.join(test_output_dir, "summary.json")
     test_output_path = get_output_path(CHIRP_PATH, '.json',
                                        test_output_dir)
@@ -158,8 +157,7 @@ def test_process_file():
 
 
 def test_format_pred():
-    with open(TAXV1_FINE_PATH) as f:
-        taxonomy = json.load(f)
+    taxonomy = load_taxonomy(TAXV1_FINE_PATH)
 
     pred = np.random.random((15,))
     pred /= pred.sum()
@@ -232,20 +230,23 @@ def test_format_pred():
         assert np.isclose(output['fine'][ref_id]["probability"],
                           exp_output['fine'][ref_id]["probability"])
 
+    # Test the hierarchical case
+    # TODO!!!!!!
+
+    # TODO: Maybe add a real prediction?
+
     # Make sure we fail when batch dimension is greater than 1
     pred_list = [np.tile(pred, (2, 1))]
     pytest.raises(BirdVoxClassifyError, format_pred, pred_list, taxonomy)
 
     # Make sure we fail with wrong taxonomy
-    with open(TAXV1_HIERARCHICAL_PATH) as f:
-        taxonomy = json.load(f)
+    taxonomy = load_taxonomy(TAXV1_HIERARCHICAL_PATH)
     pred_list = [pred]
     pytest.raises(BirdVoxClassifyError, format_pred, pred_list, taxonomy)
 
 
 def test_format_pred_batch():
-    with open(TAXV1_FINE_PATH) as f:
-        taxonomy = json.load(f)
+    taxonomy = load_taxonomy(TAXV1_FINE_PATH)
 
     pred = np.random.random((15,))
     pred /= pred.sum()
@@ -310,8 +311,7 @@ def test_format_pred_batch():
 
 
 def test_get_taxonomy_node():
-    with open(TAXV1_HIERARCHICAL_PATH) as f:
-        taxonomy = json.load(f)
+    taxonomy = load_taxonomy(TAXV1_HIERARCHICAL_PATH)
 
     ref_id = "1"
     node = get_taxonomy_node(ref_id, taxonomy)
@@ -326,7 +326,7 @@ def test_get_taxonomy_node():
     assert isinstance(node["common_name"], string_types)
     assert isinstance(node["scientific_name"], string_types)
     assert node["taxonomy_level_names"] == "coarse"
-    assert type(node["taxonomy_level_aliases"]) == dict
+    assert isinstance(node["taxonomy_level_aliases"], dict)
     assert type(node["child_ids"]) == list
     assert len(node["child_ids"]) >= 1
 
@@ -343,7 +343,7 @@ def test_get_taxonomy_node():
     assert isinstance(node["common_name"], string_types)
     assert isinstance(node["scientific_name"], string_types)
     assert node["taxonomy_level_names"] == "medium"
-    assert type(node["taxonomy_level_aliases"]) == dict
+    assert isinstance(node["taxonomy_level_aliases"], dict)
     assert type(node["child_ids"]) == list
     assert len(node["child_ids"]) >= 1
 
@@ -360,7 +360,7 @@ def test_get_taxonomy_node():
     assert isinstance(node["common_name"], string_types)
     assert isinstance(node["scientific_name"], string_types)
     assert node["taxonomy_level_names"] == "fine"
-    assert type(node["taxonomy_level_aliases"]) == dict
+    assert isinstance(node["taxonomy_level_aliases"], dict)
     assert type(node["child_ids"]) == list
     assert len(node["child_ids"]) == 0
 
@@ -660,14 +660,13 @@ def test_get_taxonomy_path():
 
 def test_validate_batch_pred_list():
     n_examples = 5
-    with open(TAXV1_HIERARCHICAL_PATH) as f:
-        taxonomy = json.load(f)
+    taxonomy = load_taxonomy(TAXV1_HIERARCHICAL_PATH)
 
     # Test valid batch
     batch_pred_list = []
     for level, encoding_list in taxonomy["output_encoding"].items():
         n_classes = len(encoding_list)
-        batch_pred = np.random.random(n_examples, n_classes)
+        batch_pred = np.random.random((n_examples, n_classes))
         batch_pred_list.append(batch_pred)
     _validate_batch_pred_list(batch_pred_list)
 
@@ -676,16 +675,15 @@ def test_validate_batch_pred_list():
     for idx, (level, encoding_list) in enumerate(taxonomy["output_encoding"].items()):
         n_classes = len(encoding_list)
         if idx == 0:
-            batch_pred = np.random.random(10, n_classes)
+            batch_pred = np.random.random((10, n_classes))
         else:
-            batch_pred = np.random.random(n_examples, n_classes)
+            batch_pred = np.random.random((n_examples, n_classes))
         batch_pred_list.append(batch_pred)
     pytest.raises(BirdVoxClassifyError, _validate_batch_pred_list, batch_pred_list)
 
 
-def test_validate_pred_list():
-    with open(TAXV1_HIERARCHICAL_PATH) as f:
-        taxonomy = json.load(f)
+def test_validate_prediction():
+    taxonomy = load_taxonomy(TAXV1_HIERARCHICAL_PATH)
 
     # Test valid prediction
     pred_list = []
@@ -693,31 +691,39 @@ def test_validate_pred_list():
         n_classes = len(encoding_list)
         pred = np.random.random((n_classes,))
         pred_list.append(pred)
-    _validate_pred_list(pred_list)
+    formatted_pred_dict = format_pred(pred_list, taxonomy)
+    _validate_prediction(pred_list, taxonomy)
+    _validate_prediction([pred[np.newaxis, :] for pred in pred_list], taxonomy)
+    _validate_prediction(formatted_pred_dict, taxonomy)
 
-    # Test invalid batch
+    # Test invalid batches
+    pytest.raises(BirdVoxClassifyError, _validate_prediction,
+                  pred_list * 2, taxonomy)
+
     pred_list = []
     for level, encoding_list in taxonomy["output_encoding"].items():
         n_classes = len(encoding_list)
         # Ensure number of classes is different than expected
         pred = np.random.random((n_classes + 5,))
         pred_list.append(pred)
-    pytest.raises(BirdVoxClassifyError, _validate_pred_list,
-                  pred_list)
+    pytest.raises(BirdVoxClassifyError, _validate_prediction,
+                  pred_list, taxonomy)
+
+
+    # TODO: Maybe add a real prediction?
 
 
 def test_get_batch_best_candidates():
-    with open(TAXV1_HIERARCHICAL_PATH) as f:
-        taxonomy = json.load(f)
+    taxonomy = load_taxonomy(TAXV1_HIERARCHICAL_PATH)
 
     # Non-HC and HC Cand: "1"
     coarse_pred = np.array([0.9])
     # Non-HC and HC Cand: "1.4"
-    medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.1])
+    medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.2])
     # Non-HC Cand: "1.1.1", HC Cand: "1.4.3"
-    fine_pred = np.array([0.5, 0.0, 0.0, 0.0, 0.0,
-                          0.0, 0.0, 0.0, 0.0, 0.4,
-                          0.0, 0.0, 0.0, 0.0, 0.1])
+    fine_pred = np.array([0.7, 0.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 0.0, 0.6,
+                          0.0, 0.0, 0.0, 0.0, 0.3])
     pred_list = [coarse_pred, medium_pred, fine_pred]
     formatted_pred_dict = format_pred(pred_list, taxonomy)
 
@@ -763,17 +769,16 @@ def test_get_batch_best_candidates():
 
 
 def test_get_best_candidates():
-    with open(TAXV1_HIERARCHICAL_PATH) as f:
-        taxonomy = json.load(f)
+    taxonomy = load_taxonomy(TAXV1_HIERARCHICAL_PATH)
 
     # Non-HC and HC Cand: "1"
     coarse_pred = np.array([0.9])
     # Non-HC and HC Cand: "1.4"
-    medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.1])
+    medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.2])
     # Non-HC Cand: "1.1.1", HC Cand: "1.4.3"
-    fine_pred = np.array([0.5, 0.0, 0.0, 0.0, 0.0,
-                          0.0, 0.0, 0.0, 0.0, 0.4,
-                          0.0, 0.0, 0.0, 0.0, 0.1])
+    fine_pred = np.array([0.7, 0.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 0.0, 0.6,
+                          0.0, 0.0, 0.0, 0.0, 0.3])
     pred_list = [coarse_pred, medium_pred, fine_pred]
     formatted_pred_dict = format_pred(pred_list, taxonomy)
     out1 = get_best_candidates(formatted_pred_dict=formatted_pred_dict)
@@ -804,7 +809,7 @@ def test_get_best_candidates():
 
     # Make sure passing in pred_list or formatted_pred_dict results in the same
     # output
-    out2 = get_best_candidates(pred_list=pred_list)
+    out2 = get_best_candidates(pred_list=pred_list, taxonomy=taxonomy)
     for level in out1.keys():
         assert set(out1[level].keys()) == set(out2[level].keys())
         for k in out1[level].keys():
@@ -844,20 +849,23 @@ def test_get_best_candidates():
     pytest.raises(BirdVoxClassifyError, get_best_candidates,
                   formatted_pred_dict=formatted_pred_dict,
                   taxonomy=None, hierarchical_consistency=True)
+    pytest.raises(BirdVoxClassifyError, get_best_candidates,
+                  pred_list=pred_list, taxonomy=None)
+
+    # TODO: Maybe add a real prediction?
 
 
 def test_apply_hierarchial_consistency():
-    with open(TAXV1_HIERARCHICAL_PATH) as f:
-        taxonomy = json.load(f)
+    taxonomy = load_taxonomy(TAXV1_HIERARCHICAL_PATH)
 
     # HC Cand: "1"
     coarse_pred = np.array([0.9])
     # HC Cand: "1.4"
-    medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.1])
+    medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.2])
     # HC Cand: "1.4.3"
-    fine_pred = np.array([0.5, 0.0, 0.0, 0.0, 0.0,
-                          0.0, 0.0, 0.0, 0.0, 0.4,
-                          0.0, 0.0, 0.0, 0.0, 0.1])
+    fine_pred = np.array([0.7, 0.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 0.0, 0.6,
+                          0.0, 0.0, 0.0, 0.0, 0.3])
     pred_list = [coarse_pred, medium_pred, fine_pred]
     formatted_pred_dict = format_pred(pred_list, taxonomy)
     out1 = apply_hierarchical_consistency(formatted_pred_dict, taxonomy)
@@ -889,11 +897,11 @@ def test_apply_hierarchial_consistency():
     # HC Cand: "1"
     coarse_pred = np.array([0.9])
     # HC Cand: "1.4"
-    medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.1])
+    medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.2])
     # HC Cand: "1.4.3"
-    fine_pred = np.array([0.4, 0.0, 0.0, 0.0, 0.0,
-                          0.0, 0.0, 0.0, 0.0, 0.5,
-                          0.0, 0.0, 0.0, 0.0, 0.1])
+    fine_pred = np.array([0.7, 0.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 0.0, 0.6,
+                          0.0, 0.0, 0.0, 0.0, 0.3])
     pred_list = [coarse_pred, medium_pred, fine_pred]
     formatted_pred_dict = format_pred(pred_list, taxonomy)
     out2 = apply_hierarchical_consistency(formatted_pred_dict, taxonomy)
@@ -925,11 +933,11 @@ def test_apply_hierarchial_consistency():
     # HC Cand: "other"
     coarse_pred = np.array([0.1])
     # HC Cand: "other"
-    medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.1])
+    medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.2])
     # HC Cand: "other"
-    fine_pred = np.array([0.4, 0.0, 0.0, 0.0, 0.0,
-                          0.0, 0.0, 0.0, 0.0, 0.5,
-                          0.0, 0.0, 0.0, 0.0, 0.1])
+    fine_pred = np.array([0.7, 0.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 0.0, 0.6,
+                          0.0, 0.0, 0.0, 0.0, 0.3])
     pred_list = [coarse_pred, medium_pred, fine_pred]
     formatted_pred_dict = format_pred(pred_list, taxonomy)
     out3 = apply_hierarchical_consistency(formatted_pred_dict, taxonomy)
@@ -982,11 +990,11 @@ def test_apply_hierarchial_consistency():
     # HC Cand: "1"
     coarse_pred = np.array([0.9])
     # HC Cand: "other"
-    medium_pred = np.array([0.1, 0.0, 0.0, 0.2, 0.7])
+    medium_pred = np.array([0.1, 0.0, 0.0, 0.2, 0.8])
     # HC Cand: "other"
-    fine_pred = np.array([0.4, 0.0, 0.0, 0.0, 0.0,
-                          0.0, 0.0, 0.0, 0.0, 0.5,
-                          0.0, 0.0, 0.0, 0.0, 0.1])
+    fine_pred = np.array([0.7, 0.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 0.0, 0.6,
+                          0.0, 0.0, 0.0, 0.0, 0.3])
     pred_list = [coarse_pred, medium_pred, fine_pred]
     formatted_pred_dict = format_pred(pred_list, taxonomy)
     out4 = apply_hierarchical_consistency(formatted_pred_dict, taxonomy)

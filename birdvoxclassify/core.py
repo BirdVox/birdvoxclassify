@@ -9,6 +9,7 @@ import os
 import warnings
 import traceback
 import soundfile as sf
+from collections import OrderedDict
 from contextlib import redirect_stderr
 
 with warnings.catch_warnings():
@@ -78,8 +79,7 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
 
     if taxonomy is None:
         taxonomy_path = get_taxonomy_path(model_name)
-        with open(taxonomy_path, 'r') as f:
-            taxonomy = json.load(f)
+        taxonomy = load_taxonomy(taxonomy_path)
 
     # Create output_dir if necessary.
     if output_dir is not None:
@@ -158,7 +158,7 @@ def format_pred(pred_list, taxonomy):
         Prediction dictionary object
 
     """
-    _validate_pred_list(pred_list, taxonomy)
+    _validate_prediction(pred_list, taxonomy)
     formatted_pred_dict = {}
     encoding_items = taxonomy['output_encoding'].items()
     for pred, (level, encoding_list) in zip(pred_list, encoding_items):
@@ -171,6 +171,10 @@ def format_pred(pred_list, taxonomy):
                           'than 1. Please use `format_pred_batch`.'
                 raise BirdVoxClassifyError(err_msg)
             pred = pred.flatten()
+
+        # Handle the binary case
+        if pred.shape[-1] == 1:
+            pred = np.concatenate([pred, 1.0-pred], axis=-1)
 
         for prob, item in zip(pred, encoding_list):
             # Assumption: only "other" class has more than one ref id
@@ -220,27 +224,42 @@ def _validate_batch_pred_list(batch_pred_list):
             raise BirdVoxClassifyError(err_msg)
 
 
-def _validate_pred_list(pred_list, taxonomy):
+def _validate_prediction(prediction, taxonomy):
     """
-    Perform sanity check on a list of predictions to ensure that the number of
+    Perform sanity check on a prediction to ensure that the number of
     classes in each prediction are consistent with the given taxonomy.
 
 
     Parameters
     ----------
-    pred_list : list[np.ndarray [shape (1, num_labels) or (num_labels,)]
-        List of predictions at the taxonomical levels predicted by the model
+    prediction : list or dict
+        Unformatted prediction list or formatted prediction dictionary
         for a single example.
     taxonomy : dict or None [default: None]
         Taxonomy JSON object used to apply hierarchical consistency.
         If ``None``, then ``hierarchical_consistency`` must be ``False``.
 
     """
-    if len(pred_list) != len(taxonomy['output_encoding']):
+    if len(prediction) != len(taxonomy['output_encoding']):
         err_msg = "Taxonomy expects {} outputs but model produced {} outputs."
         raise BirdVoxClassifyError(err_msg.format(
-            len(taxonomy['output_encoding']), len(pred_list)
+            len(taxonomy['output_encoding']), len(prediction)
         ))
+    for idx, (level, encoding_list) \
+            in enumerate(taxonomy['output_encoding'].items()):
+        if type(prediction) == list:
+            n_classes_est = prediction[idx].shape[-1]
+        else:
+            n_classes_est = len(prediction[level])
+        n_classes_exp = len(encoding_list)
+        if (n_classes_est != n_classes_exp) \
+                and not (n_classes_est == 1 and n_classes_exp == 2):
+            # Note that we make an exception for the binary case
+            err_msg = "Taxonomy expects {} classes at level {} but model " \
+                      "predicted {} classes."
+            raise BirdVoxClassifyError(err_msg.format(
+                n_classes_exp, level, n_classes_est
+            ))
 
 
 def format_pred_batch(batch_pred_list, taxonomy):
@@ -822,6 +841,9 @@ def get_best_candidates(pred_list=None, formatted_pred_dict=None, taxonomy=None,
         raise BirdVoxClassifyError(err_msg)
 
     if formatted_pred_dict is None:
+        if taxonomy is None:
+            err_msg = "Must provide taxonomy if unformatted prediction is provided."
+            raise BirdVoxClassifyError(err_msg)
         # Format prediction if not provided
         formatted_pred_dict = format_pred(pred_list, taxonomy)
 
@@ -833,6 +855,15 @@ def get_best_candidates(pred_list=None, formatted_pred_dict=None, taxonomy=None,
         return {level: max(taxon_dict.values(),
                            key=operator.itemgetter('probability'))
                 for level, taxon_dict in formatted_pred_dict.items()}
+
+
+def load_taxonomy(taxonomy_path):
+    with open(taxonomy_path, 'r') as f:
+        # Assumption: output encodings levels are enumerated from coarsest
+        # to finest, so we load them with OrderedDicts to ensure consistent
+        # ordering.
+        taxonomy = json.load(f, object_pairs_hook=OrderedDict)
+    return taxonomy
 
 
 def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
@@ -874,7 +905,7 @@ def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
         for each taxonomic level.
 
     """
-    _validate_pred_list(formatted_pred_dict, taxonomy)
+    _validate_prediction(formatted_pred_dict, taxonomy)
 
     # Assumption: "output_encoding" contains hierarchy levels in order from
     # coarsest to finest
