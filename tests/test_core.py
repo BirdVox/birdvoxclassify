@@ -10,7 +10,6 @@ import pytest
 import numpy as np
 import soundfile as sf
 from scipy.signal.windows import get_window
-from six import string_types
 from numbers import Real
 
 from birdvoxclassify import *
@@ -54,15 +53,28 @@ def test_process_file():
         assert type(output) == dict
         assert len(output) == 1
         for k, v in output.items():
-            assert isinstance(k, string_types)
+            assert isinstance(k, str)
             assert type(v) == dict
+
+        # Test with selecting best candidates
+        output = process_file(CHIRP_PATH, model_name=MODEL_NAME,
+                              select_best_candidates=True)
+        assert type(output) == dict
+        assert len(output) == 1
+        for k, v in output.items():
+            assert isinstance(k, str)
+            assert type(v) == dict
+            # There should only be one candidate per level
+            for level, cand_dict in v.items():
+                assert isinstance(level, str)
+                assert isinstance(cand_dict, dict)
 
         # Test with list
         output = process_file([CHIRP_PATH], model_name=MODEL_NAME)
         assert type(output) == dict
         assert len(output) == 1
         for k, v in output.items():
-            assert isinstance(k, string_types)
+            assert isinstance(k, str)
             assert type(v) == dict
 
         # Test with given classifier and taxonomy
@@ -71,7 +83,7 @@ def test_process_file():
         assert type(output) == dict
         assert len(output) == 1
         for k, v in output.items():
-            assert isinstance(k, string_types)
+            assert isinstance(k, str)
             assert type(v) == dict
 
         # Test output_dir
@@ -80,7 +92,7 @@ def test_process_file():
         assert type(output) == dict
         assert len(output) == 1
         for k, v in output.items():
-            assert isinstance(k, string_types)
+            assert isinstance(k, str)
             assert type(v) == dict
         with open(test_output_path, 'r') as f:
             f_output = json.load(f)
@@ -92,7 +104,7 @@ def test_process_file():
         assert type(output) == dict
         assert len(output) == 1
         for k, v in output.items():
-            assert isinstance(k, string_types)
+            assert isinstance(k, str)
             assert type(v) == dict
         with open(suffix_test_output_path, 'r') as f:
             f_output = json.load(f)
@@ -105,7 +117,7 @@ def test_process_file():
         assert type(output) == dict
         assert len(output) == 1
         for k, v in output.items():
-            assert isinstance(k, string_types)
+            assert isinstance(k, str)
             assert type(v) == dict
         with open(test_output_summary_path, 'r') as f:
             f_output = json.load(f)
@@ -128,7 +140,7 @@ def test_process_file():
         assert type(output) == dict
         assert len(output) == len(test_audio_list)
         for k, v in output.items():
-            assert isinstance(k, string_types)
+            assert isinstance(k, str)
             assert type(v) == dict
 
         # Test with different batch_sizes
@@ -136,7 +148,7 @@ def test_process_file():
         assert type(output) == dict
         assert len(output) == len(test_audio_list)
         for k, v in output.items():
-            assert isinstance(k, string_types)
+            assert isinstance(k, str)
             assert type(v) == dict
 
         # Make sure we create the output dir if it doesn't exist
@@ -146,7 +158,7 @@ def test_process_file():
         assert type(output) == dict
         assert len(output) == 1
         for k, v in output.items():
-            assert isinstance(k, string_types)
+            assert isinstance(k, str)
             assert type(v) == dict
         with open(test_output_path, 'r') as f:
             f_output = json.load(f)
@@ -230,11 +242,6 @@ def test_format_pred():
         assert np.isclose(output['fine'][ref_id]["probability"],
                           exp_output['fine'][ref_id]["probability"])
 
-    # Test the hierarchical case
-    # TODO!!!!!!
-
-    # TODO: Maybe add a real prediction?
-
     # Make sure we fail when batch dimension is greater than 1
     pred_list = [np.tile(pred, (2, 1))]
     pytest.raises(BirdVoxClassifyError, format_pred, pred_list, taxonomy)
@@ -243,6 +250,64 @@ def test_format_pred():
     taxonomy = load_taxonomy(TAXV1_HIERARCHICAL_PATH)
     pred_list = [pred]
     pytest.raises(BirdVoxClassifyError, format_pred, pred_list, taxonomy)
+
+    # Test the hierarchical case
+    taxonomy = load_taxonomy(TAXV1_HIERARCHICAL_PATH)
+    fine_pred = np.random.random((15,))
+    medium_pred = np.random.random((5,))
+    coarse_pred = np.random.random((1,))
+    pred_list = [coarse_pred, medium_pred, fine_pred]
+    output = format_pred(pred_list, taxonomy)
+    exp_output = {}
+    for level_idx, (level, encoding_list) \
+            in enumerate(taxonomy['output_encoding'].items()):
+        exp_output[level] = {}
+        for idx, encoding_item in enumerate(encoding_list):
+            if len(encoding_item["ids"]) > 1:
+                ref_id = "other"
+                node = {
+                    "common_name": "other",
+                    "scientific_name": "other",
+                    "taxonomy_level_names": level,
+                    "taxonomy_level_aliases": {},
+                    'child_ids': encoding_item["ids"]
+                }
+            else:
+                ref_id = encoding_item["ids"][0]
+                node = get_taxonomy_node(ref_id, taxonomy)
+
+            if level == 'coarse' and idx == 1:
+                exp_output[level][ref_id] = {
+                    'probability': 1 - pred_list[level_idx][0]}
+            else:
+                exp_output[level][ref_id] = {'probability': pred_list[level_idx][idx]}
+            exp_output[level][ref_id].update(node)
+    for level, encoding_list in taxonomy["output_encoding"].items():
+        for encoding_item in encoding_list:
+            if len(encoding_item["ids"]) > 1:
+                ref_id = "other"
+            else:
+                ref_id = encoding_item["ids"][0]
+
+            assert output[level][ref_id]["common_name"] \
+                   == exp_output[level][ref_id]["common_name"]
+            assert output[level][ref_id]["scientific_name"] \
+                   == exp_output[level][ref_id]["scientific_name"]
+            assert output[level][ref_id]["taxonomy_level_names"] \
+                   == exp_output[level][ref_id]["taxonomy_level_names"]
+            assert output[level][ref_id]["taxonomy_level_aliases"] \
+                   == exp_output[level][ref_id]["taxonomy_level_aliases"]
+            assert output[level][ref_id]["child_ids"] \
+                   == exp_output[level][ref_id]["child_ids"]
+            assert np.isclose(output[level][ref_id]["probability"],
+                              exp_output[level][ref_id]["probability"])
+
+    # Make sure real prediction makes it through the pipeline
+    audio, sr = sf.read(CHIRP_PATH, dtype='float64')
+    classifier = load_classifier(MODEL_NAME)
+    pcen = compute_pcen(audio, sr)
+    pred = predict(pcen, classifier, logging.INFO)
+    output = format_pred(pred, taxonomy)
 
 
 def test_format_pred_batch():
@@ -323,8 +388,8 @@ def test_get_taxonomy_node():
     assert "child_ids" in node
 
     assert node["id"] == ref_id
-    assert isinstance(node["common_name"], string_types)
-    assert isinstance(node["scientific_name"], string_types)
+    assert isinstance(node["common_name"], str)
+    assert isinstance(node["scientific_name"], str)
     assert node["taxonomy_level_names"] == "coarse"
     assert isinstance(node["taxonomy_level_aliases"], dict)
     assert type(node["child_ids"]) == list
@@ -340,8 +405,8 @@ def test_get_taxonomy_node():
     assert "child_ids" in node
 
     assert node["id"] == ref_id
-    assert isinstance(node["common_name"], string_types)
-    assert isinstance(node["scientific_name"], string_types)
+    assert isinstance(node["common_name"], str)
+    assert isinstance(node["scientific_name"], str)
     assert node["taxonomy_level_names"] == "medium"
     assert isinstance(node["taxonomy_level_aliases"], dict)
     assert type(node["child_ids"]) == list
@@ -357,8 +422,8 @@ def test_get_taxonomy_node():
     assert "child_ids" in node
 
     assert node["id"] == ref_id
-    assert isinstance(node["common_name"], string_types)
-    assert isinstance(node["scientific_name"], string_types)
+    assert isinstance(node["common_name"], str)
+    assert isinstance(node["scientific_name"], str)
     assert node["taxonomy_level_names"] == "fine"
     assert isinstance(node["taxonomy_level_aliases"], dict)
     assert type(node["child_ids"]) == list
@@ -592,7 +657,7 @@ def test_get_pcen_settings():
     assert settings['n_hops'] > 0
 
     assert 'window' in settings
-    assert isinstance(settings['window'], string_types)
+    assert isinstance(settings['window'], str)
     # Make sure window is valid
     get_window(settings['window'], 5)
 
@@ -709,8 +774,10 @@ def test_validate_prediction():
     pytest.raises(BirdVoxClassifyError, _validate_prediction,
                   pred_list, taxonomy)
 
-
-    # TODO: Maybe add a real prediction?
+    # Make sure a real prediction makes it through the pipeline with no problem
+    output = process_file(CHIRP_PATH, model_name=MODEL_NAME)
+    formatted_pred_dict = [x for x in output.values()][0]
+    _validate_prediction(formatted_pred_dict, taxonomy)
 
 
 def test_get_batch_best_candidates():
