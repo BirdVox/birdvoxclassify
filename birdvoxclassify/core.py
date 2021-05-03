@@ -67,6 +67,7 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
         Output dictionary mapping audio filename to prediction dictionary, in
         the format produced by ``format_pred``.
     """
+    # TODO: Add best candidates flags
     # Set logger level.
     logging.getLogger().setLevel(logger_level)
 
@@ -914,9 +915,22 @@ def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
     # Set thresholds. Note: a threshold of 0.5 corresponds to comparing the
     # argmax in-vocab class with "other" defined by 1 - max
     if level_threshold_dict is not None:
-        assert set(taxon_levels) == set(level_threshold_dict.keys())
+        if set(taxon_levels) != set(level_threshold_dict.keys()):
+            err_msg = f'Levels in level_threshold_dict ' \
+                      f'({tuple(level_threshold_dict.keys())}) ' \
+                      f'do not match taxonomy levels ' \
+                      f'({tuple(taxon_levels)})'
+            raise BirdVoxClassifyError(err_msg)
+        for level, threshold in level_threshold_dict.items():
+            if not (0 < threshold < 1):
+                err_msg = f'Threshold ({threshold}) for level {level} must ' \
+                          f'be in (0, 1)'
+                raise BirdVoxClassifyError(err_msg)
     else:
-        assert 0 < detection_threshold < 1
+        if not (0 < detection_threshold < 1):
+            err_msg = f'detection_threshold ({detection_threshold}) must ' \
+                      f'be in (0, 1)'
+            raise BirdVoxClassifyError(err_msg)
         level_threshold_dict = {level: detection_threshold
                                 for level in taxon_levels}
 

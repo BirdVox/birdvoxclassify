@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
-from collections import Iterable
+from collections.abc import Iterable
 from pprint import pformat
 
 import birdvoxclassify

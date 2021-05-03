@@ -741,7 +741,12 @@ def test_get_batch_best_candidates():
 
     batch_best_cand_list = get_batch_best_candidates(
         batch_formatted_pred_list=batch_formatted_pred_list)
+    batch_best_cand_list_2 = get_batch_best_candidates(
+        batch_pred_list=batch_pred_list,
+        taxonomy=taxonomy
+    )
 
+    # Make sure output is as expected
     for idx, best_cand_dict in enumerate(batch_best_cand_list):
         exp_output = exp_output_batch[idx]
         assert set(exp_output.keys()) == set(best_cand_dict.keys())
@@ -758,6 +763,25 @@ def test_get_batch_best_candidates():
                    == exp_output[level]["child_ids"]
             assert np.isclose(best_cand_dict[level]["probability"],
                               exp_output[level]["probability"])
+
+    # Make sure unformatted and formatted batches both produce the same result
+    assert len(batch_best_cand_list) == len(batch_best_cand_list_2)
+    for idx, best_cand_dict in enumerate(batch_best_cand_list):
+        best_cand_dict_2 = batch_best_cand_list_2[idx]
+        assert set(best_cand_dict_2.keys()) == set(best_cand_dict.keys())
+        for level in best_cand_dict_2.keys():
+            assert best_cand_dict[level]["common_name"] \
+                   == best_cand_dict_2[level]["common_name"]
+            assert best_cand_dict[level]["scientific_name"] \
+                   == best_cand_dict_2[level]["scientific_name"]
+            assert best_cand_dict[level]["taxonomy_level_names"] \
+                   == best_cand_dict_2[level]["taxonomy_level_names"]
+            assert best_cand_dict[level]["taxonomy_level_aliases"] \
+                   == best_cand_dict_2[level]["taxonomy_level_aliases"]
+            assert best_cand_dict[level]["child_ids"] \
+                   == best_cand_dict_2[level]["child_ids"]
+            assert np.isclose(best_cand_dict[level]["probability"],
+                              best_cand_dict_2[level]["probability"])
 
     # Check invalid inputs
     pytest.raises(BirdVoxClassifyError, get_batch_best_candidates,
@@ -852,7 +876,13 @@ def test_get_best_candidates():
     pytest.raises(BirdVoxClassifyError, get_best_candidates,
                   pred_list=pred_list, taxonomy=None)
 
-    # TODO: Maybe add a real prediction?
+    # Make sure a real prediction makes it through the pipeline with no problem
+    output = process_file(CHIRP_PATH, model_name=MODEL_NAME)
+    formatted_pred_dict = [x for x in output.values()][0]
+    out1 = get_best_candidates(formatted_pred_dict=formatted_pred_dict)
+    out2 = get_best_candidates(formatted_pred_dict=formatted_pred_dict,
+                               hierarchical_consistency=True,
+                               taxonomy=taxonomy)
 
 
 def test_apply_hierarchial_consistency():
@@ -969,7 +999,6 @@ def test_apply_hierarchial_consistency():
         }
     }
 
-
     # Make sure output is in expected format
     assert set(out3.keys()) == set(taxonomy["output_encoding"].keys())
     for level, cand_dict in out3.items():
@@ -1035,3 +1064,78 @@ def test_apply_hierarchial_consistency():
         assert np.isclose(out4['fine']["probability"],
                           exp_output['fine']["probability"])
 
+    # Test with custom level_threshold_dict
+    level_threshold_dict = {
+        "coarse": 0.99,
+        "medium": 0.99,
+        "fine": 0.99
+    }
+    # HC Cand: "other"
+    coarse_pred = np.array([0.9])
+    # HC Cand: "other"
+    medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.2])
+    # HC Cand: "other"
+    fine_pred = np.array([0.7, 0.0, 0.0, 0.0, 0.0,
+                          0.0, 0.0, 0.0, 0.0, 0.6,
+                          0.0, 0.0, 0.0, 0.0, 0.3])
+    pred_list = [coarse_pred, medium_pred, fine_pred]
+    formatted_pred_dict = format_pred(pred_list, taxonomy)
+    out1 = apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
+                                          level_threshold_dict=level_threshold_dict)
+
+    exp_output = {}
+    exp_output['coarse'] = {
+        "probability": 1 - coarse_pred[0],
+        "common_name": "other",
+        "scientific_name": "other",
+        "taxonomy_level_names": "medium",
+        "taxonomy_level_aliases": {},
+        'child_ids': taxonomy["output_encoding"]["coarse"][-1]["ids"]
+    }
+    exp_output['medium'] = {
+        "probability": 1 - coarse_pred[0],
+        "common_name": "other",
+        "scientific_name": "other",
+        "taxonomy_level_names": "medium",
+        "taxonomy_level_aliases": {},
+        'child_ids': taxonomy["output_encoding"]["medium"][-1]["ids"]
+    }
+    exp_output['fine'] = {
+        "probability": 1 - coarse_pred[0],
+        "common_name": "other",
+        "scientific_name": "other",
+        "taxonomy_level_names": "fine",
+        "taxonomy_level_aliases": {},
+        'child_ids': taxonomy["output_encoding"]["fine"][-1]["ids"]
+    }
+
+    # Make sure output is in expected format
+    assert set(out1.keys()) == set(taxonomy["output_encoding"].keys())
+    for level, cand_dict in out1.items():
+        assert isinstance(cand_dict, dict)
+        assert out1[level]["common_name"] == exp_output[level]["common_name"]
+        assert out1['fine']["scientific_name"] \
+               == exp_output['fine']["scientific_name"]
+        assert out1['fine']["taxonomy_level_names"] \
+               == exp_output['fine']["taxonomy_level_names"]
+        assert out1['fine']["taxonomy_level_aliases"] \
+               == exp_output['fine']["taxonomy_level_aliases"]
+        assert out1['fine']["child_ids"] \
+               == exp_output['fine']["child_ids"]
+        assert np.isclose(out1['fine']["probability"],
+                          exp_output['fine']["probability"])
+
+    # Check invalid inputs
+    pytest.raises(BirdVoxClassifyError, apply_hierarchical_consistency,
+                  formatted_pred_dict, taxonomy, detection_threshold=-1)
+    # Check invalid inputs
+    pytest.raises(BirdVoxClassifyError, apply_hierarchical_consistency,
+                  formatted_pred_dict, taxonomy, level_threshold_dict={
+            'coarse': -1,
+            'medium': -1,
+            'fine': -1
+        })
+    pytest.raises(BirdVoxClassifyError, apply_hierarchical_consistency,
+                  formatted_pred_dict, taxonomy, level_threshold_dict={
+            'garply': 0.1
+        })
