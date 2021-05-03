@@ -31,6 +31,7 @@ DEFAULT_MODEL_NAME = "{}-{}".format(MODEL_PREFIX, DEFAULT_MODEL_SUFFIX)
 
 def process_file(filepaths, output_dir=None, output_summary_path=None,
                  classifier=None, taxonomy=None, batch_size=512, suffix='',
+                 select_best_candidates=False, hierarchical_consistency=False,
                  logger_level=logging.INFO, model_name=DEFAULT_MODEL_NAME):
     """
     Runs bird species classification model on one or more audio clips.
@@ -55,6 +56,12 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
         Batch size for predictions
     suffix : str [default: ""]
         String to append to filename
+    select_best_candidates : bool [default: False]
+        If ``True``, best candidates will be provided in output dictionary
+        instead of all classes and their probabilities.
+    hierarchical_consistency : bool [default: False]
+        If ``True`` and if ``select_best_candidates`` is ``True``, apply
+        hierarchical consistency when selecting best candidates.
     logger_level : int [default: logging.INFO]
         Logger level
     model_name : str [default birdvoxclassify.DEFAULT_MODEL_NAME]
@@ -64,10 +71,11 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
     Returns
     -------
     output_dict : dict[str, dict]
-        Output dictionary mapping audio filename to prediction dictionary, in
-        the format produced by ``format_pred``.
+        Output dictionary mapping audio filename to prediction dictionary. If
+        ``select_best_candidates`` is ``False``, the dictionary is in the format
+        produced by ``format_pred``. Otherwise, the dictionary is in the format
+        produced by ``get_best_candidates``.
     """
-    # TODO: Add best candidates flags
     # Set logger level.
     logging.getLogger().setLevel(logger_level)
 
@@ -101,7 +109,15 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
             pred = [p[idx] for p in batch_pred]
             pred_dict = format_pred(pred, taxonomy)
 
-            output_dict[filepath] = pred_dict
+            if select_best_candidates:
+                file_dict = get_best_candidates(
+                    formatted_pred_dict=pred_dict,
+                    taxonomy=taxonomy,
+                    hierarchical_consistency=hierarchical_consistency)
+            else:
+                file_dict = pred_dict
+
+            output_dict[filepath] = file_dict
 
             if output_dir:
                 output_path = get_output_path(filepath,

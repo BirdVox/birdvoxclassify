@@ -36,11 +36,11 @@ def get_file_list(input_list):
 
 
 def run(inputs, output_dir=None, output_summary_path=None,
-        model_name=DEFAULT_MODEL_NAME, batch_size=512, suffix="",
-        logger_level=logging.INFO):
+        model_name=DEFAULT_MODEL_NAME, batch_size=512,
+        select_best_candidates=False, hierarchical_consistency=False,
+        suffix="", logger_level=logging.INFO):
     """Runs classification model on input audio clips"""
     # Set logger level.
-    # TODO: Add "best_candidates" options
     logging.getLogger().setLevel(logger_level)
 
     if isinstance(inputs, str):
@@ -69,6 +69,8 @@ def run(inputs, output_dir=None, output_summary_path=None,
         output_summary_path=output_summary_path,
         model_name=model_name,
         batch_size=batch_size,
+        select_best_candidates=select_best_candidates,
+        hierarchical_consistency=hierarchical_consistency,
         suffix=suffix,
         logger_level=logger_level)
 
@@ -96,6 +98,17 @@ def parse_args(args):
     parser.add_argument(
         '--output-summary-path', '-O', default=None, dest='output_summary_path',
         help='Directory to save individual output file(s)')
+
+    parser.add_argument(
+        '--select-best-candidates', '-B', action='store_true',
+        dest='select_best_candidates',
+        help='Select best candidates instead of '
+             'enumerating all classes in output.')
+
+    parser.add_argument(
+        '--hierarchical-consistency', '-H', action='store_true',
+        dest='hierarchical_consistency',
+        help='Apply hierarchical consistency when selecting best candidates.')
 
     parser.add_argument(
         '--model-name', '-c', default=DEFAULT_MODEL_NAME,
@@ -157,6 +170,8 @@ def main():
         output_summary_path=args.output_summary_path,
         model_name=args.model_name,
         batch_size=args.batch_size,
+        select_best_candidates=args.select_best_candidates,
+        hierarchical_consistency=args.hierarchical_consistency,
         suffix=args.suffix,
         logger_level=logger_level)
 
