@@ -31,6 +31,13 @@ You can simply compute bird species predictions out of the box, like so:
     formatted_pred = process_file(filepath)
     # Prediction for a list of files
     formatted_pred = process_file(filepath_list)
+    # Dictionary of best predicted candidates for a list of files
+    best_candidates = process_file(filepath_list,
+                                   select_best_candidates=True)
+    # Get hierarchically consistent candidates
+    best_candidates = process_file(filepath_list,
+                                   select_best_candidates=True,
+                                   hierarchical_consistency=True)
 
     ## Save individual output files for each audio file
     process_file(filepath_list, output_dir='/output/dir')
@@ -46,8 +53,7 @@ You can simply compute bird species predictions out of the box, like so:
     # Pre-load model and taxonomy
     model = bvc.load_classifier(bvc.DEFAULT_MODEL_NAME)
     taxonomy_path = bvc.get_taxonomy_path(bvc.DEFAULT_MODEL_NAME)
-    with open(taxonomy_path, 'r') as f:
-        taxonomy = json.load(f)
+    taxonomy = bvc.load_taxonomy(taxonomy_path)
     formatted_pred = process_file(filepath, classifier=model, taxonomy=taxonomy)
 
     # Change batch size depending on computational resources
@@ -68,8 +74,7 @@ You can also compute predictions directly on loaded audio arrays:
     # Load model and taxonomy
     model = bvc.load_classifier(bvc.DEFAULT_MODEL_NAME)
     taxonomy_path = bvc.get_taxonomy_path(bvc.DEFAULT_MODEL_NAME)
-    with open(taxonomy_path, 'r') as f:
-        taxonomy = json.load(f)
+    taxonomy = bvc.load_taxonomy(taxonomy_path)
 
     # Get list of one-hot prediction array for each level of the taxonomy
     pred_list = bvc.predict(pcen, model)
@@ -78,17 +83,36 @@ You can also compute predictions directly on loaded audio arrays:
     # Format prediction in more interpretable format
     formatted_pred = bvc.format_pred(pred_list, taxonomy)
 
+    # Select best candidates from prediction
+    best_candidates = get_best_candidates(pred_list=pred_list, taxonomy=taxonomy)
+    # Can use prediction list or formatted prediction dict
+    best_candidates = get_best_candidates(formatted_pred_dict=formatted_pred)
+    # Get hierarchically consistent candidates
+    best_candidates = get_best_candidates(formatted_pred_dict=formatted_pred,
+                                          hierarchical_consistency=True,
+                                          taxonomy=taxonomy)
+
 
 Using the Command Line Interface (CLI)
 --------------------------------------
 
-To compute embeddings for a single file via the command line run:
+To generate predictions for a single file via the command line run:
 
 .. code-block:: shell
 
     $ birdvoxclassify /path/to/file.wav
 
-This will print out the model prediction in JSON format.
+This will print out the model prediction in JSON format. If you wish, you can output only the best candidates (at each taxonomic level):
+
+.. code-block:: shell
+
+    $ birdvoxclassify -B /path/to/file.wav
+
+This will print out the best candidates under the model prediction in JSON format. You can also enforce that the candidates are hierarchically consistent:
+
+.. code-block:: shell
+
+    $ birdvoxclassify -B -H /path/to/file.wav
 
 You can also provide multiple input files or directories:
 
