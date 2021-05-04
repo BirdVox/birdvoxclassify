@@ -2,9 +2,9 @@
 
 Changelog
 ---------
-v0.2.1
+v0.3.0
 ~~~~~~
-- Add functionality for obtaining best candidates
+- Add functionality for obtaining best candidates from predictions
 - Add hierarchical consistency implementation for selecting best candidates
 - Drop ``six`` dependency.
 
