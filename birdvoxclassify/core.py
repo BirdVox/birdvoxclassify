@@ -875,6 +875,20 @@ def get_best_candidates(pred_list=None, formatted_pred_dict=None, taxonomy=None,
 
 
 def load_taxonomy(taxonomy_path):
+    """
+    Loads taxonomy JSON file as an OrderedDict to ensure consistent ordering.
+
+    Parameters
+    ----------
+    taxonomy_path : str
+        Path to taxonomy file.
+
+    Returns
+    -------
+    taxonomy : OrderedDict
+        Taxonomy object
+
+    """
     with open(taxonomy_path, 'r') as f:
         # Assumption: output encodings levels are enumerated from coarsest
         # to finest, so we load them with OrderedDicts to ensure consistent
