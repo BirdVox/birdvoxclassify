@@ -223,6 +223,10 @@ def test_format_pred():
             == exp_output['fine'][ref_id]["child_ids"]
         assert np.isclose(output['fine'][ref_id]["probability"],
                           exp_output['fine'][ref_id]["probability"])
+        if ref_id != "other":
+            assert output['fine'][ref_id]["id"] \
+                   == exp_output['fine'][ref_id]["id"] \
+                   == ref_id
 
     # Test when we have a batch dimension of 1
     pred_list = [pred[np.newaxis, :]]
@@ -241,6 +245,10 @@ def test_format_pred():
                == exp_output['fine'][ref_id]["child_ids"]
         assert np.isclose(output['fine'][ref_id]["probability"],
                           exp_output['fine'][ref_id]["probability"])
+        if ref_id != "other":
+            assert output['fine'][ref_id]["id"] \
+                   == exp_output['fine'][ref_id]["id"] \
+                   == ref_id
 
     # Make sure we fail when batch dimension is greater than 1
     pred_list = [np.tile(pred, (2, 1))]
@@ -301,6 +309,10 @@ def test_format_pred():
                    == exp_output[level][ref_id]["child_ids"]
             assert np.isclose(output[level][ref_id]["probability"],
                               exp_output[level][ref_id]["probability"])
+            if ref_id != "other":
+                assert output[level][ref_id]["id"] \
+                       == exp_output[level][ref_id]["id"] \
+                       == ref_id
 
     # Make sure real prediction makes it through the pipeline
     audio, sr = sf.read(CHIRP_PATH, dtype='float64')
@@ -370,6 +382,10 @@ def test_format_pred_batch():
                 == exp_output['fine'][ref_id]["child_ids"]
             assert np.isclose(output['fine'][ref_id]["probability"],
                               exp_output['fine'][ref_id]["probability"])
+            if ref_id != "other":
+                assert output['fine'][ref_id]["id"] \
+                       == exp_output['fine'][ref_id]["id"] \
+                       == ref_id
 
     pytest.raises(BirdVoxClassifyError, format_pred_batch,
                   [np.tile(pred, (10, 1)), np.tile(pred, (5, 1))], taxonomy)
@@ -830,6 +846,8 @@ def test_get_batch_best_candidates():
                    == exp_output[level]["child_ids"]
             assert np.isclose(best_cand_dict[level]["probability"],
                               exp_output[level]["probability"])
+            if 'id' in exp_output[level]:
+                assert best_cand_dict[level]["id"] == exp_output[level]["id"]
 
     # Make sure unformatted and formatted batches both produce the same result
     assert len(batch_best_cand_list) == len(batch_best_cand_list_2)
@@ -849,6 +867,8 @@ def test_get_batch_best_candidates():
                    == best_cand_dict_2[level]["child_ids"]
             assert np.isclose(best_cand_dict[level]["probability"],
                               best_cand_dict_2[level]["probability"])
+            if 'id' in best_cand_dict[level]:
+                assert best_cand_dict[level]["id"] == best_cand_dict_2[level]["id"]
 
     # Check invalid inputs
     pytest.raises(BirdVoxClassifyError, get_batch_best_candidates,
@@ -887,16 +907,18 @@ def test_get_best_candidates():
     for level, cand_dict in out1.items():
         assert isinstance(cand_dict, dict)
         assert out1[level]["common_name"] == exp_output[level]["common_name"]
-        assert out1['fine']["scientific_name"] \
-               == exp_output['fine']["scientific_name"]
-        assert out1['fine']["taxonomy_level_names"] \
-               == exp_output['fine']["taxonomy_level_names"]
-        assert out1['fine']["taxonomy_level_aliases"] \
-               == exp_output['fine']["taxonomy_level_aliases"]
-        assert out1['fine']["child_ids"] \
-               == exp_output['fine']["child_ids"]
-        assert np.isclose(out1['fine']["probability"],
-                          exp_output['fine']["probability"])
+        assert out1[level]["scientific_name"] \
+               == exp_output[level]["scientific_name"]
+        assert out1[level]["taxonomy_level_names"] \
+               == exp_output[level]["taxonomy_level_names"]
+        assert out1[level]["taxonomy_level_aliases"] \
+               == exp_output[level]["taxonomy_level_aliases"]
+        assert out1[level]["child_ids"] \
+               == exp_output[level]["child_ids"]
+        assert np.isclose(out1[level]["probability"],
+                          exp_output[level]["probability"])
+        if 'id' in exp_output[level]:
+            assert out1[level]["id"] == exp_output[level]["id"]
 
     # Make sure passing in pred_list or formatted_pred_dict results in the same
     # output
@@ -933,6 +955,8 @@ def test_get_best_candidates():
                == exp_output['fine']["child_ids"]
         assert np.isclose(out3['fine']["probability"],
                           exp_output['fine']["probability"])
+        if 'id' in exp_output[level]:
+            assert out3[level]["id"] == exp_output[level]["id"]
 
     # Test invalid inputs
     pytest.raises(BirdVoxClassifyError, get_best_candidates,
@@ -959,7 +983,7 @@ def test_apply_hierarchial_consistency():
     coarse_pred = np.array([0.9])
     # HC Cand: "1.4"
     medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.2])
-    # HC Cand: "1.4.3"
+    # HC Cand: "1.4.3" (different class than without HC)
     fine_pred = np.array([0.7, 0.0, 0.0, 0.0, 0.0,
                           0.0, 0.0, 0.0, 0.0, 0.6,
                           0.0, 0.0, 0.0, 0.0, 0.3])
@@ -990,14 +1014,16 @@ def test_apply_hierarchial_consistency():
                == exp_output['fine']["child_ids"]
         assert np.isclose(out1['fine']["probability"],
                           exp_output['fine']["probability"])
+        if 'id' in exp_output[level]:
+            assert out1[level]["id"] == exp_output[level]["id"]
 
     # HC Cand: "1"
     coarse_pred = np.array([0.9])
     # HC Cand: "1.4"
     medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.2])
-    # HC Cand: "1.4.3"
+    # HC Cand: "other" (wouldn't be other w/o HC)
     fine_pred = np.array([0.7, 0.0, 0.0, 0.0, 0.0,
-                          0.0, 0.0, 0.0, 0.0, 0.6,
+                          0.0, 0.0, 0.0, 0.0, 0.3,
                           0.0, 0.0, 0.0, 0.0, 0.3])
     pred_list = [coarse_pred, medium_pred, fine_pred]
     formatted_pred_dict = format_pred(pred_list, taxonomy)
@@ -1008,30 +1034,38 @@ def test_apply_hierarchial_consistency():
     exp_output['coarse'].update(get_taxonomy_node("1", taxonomy))
     exp_output['medium'] = {'probability': medium_pred[3]}
     exp_output['medium'].update(get_taxonomy_node("1.4", taxonomy))
-    exp_output['fine'] = {'probability': fine_pred[9]}
-    exp_output['fine'].update(get_taxonomy_node("1.4.3", taxonomy))
+    exp_output["fine"] = {
+        "probability": 1 - fine_pred[9],
+        "common_name": "other",
+        "scientific_name": "other",
+        "taxonomy_level_names": "fine",
+        "taxonomy_level_aliases": {},
+        'child_ids': taxonomy["output_encoding"]["fine"][-1]["ids"]
+    }
 
     # Make sure output is in expected format
     assert set(out2.keys()) == set(taxonomy["output_encoding"].keys())
     for level, cand_dict in out2.items():
         assert isinstance(cand_dict, dict)
         assert out2[level]["common_name"] == exp_output[level]["common_name"]
-        assert out2['fine']["scientific_name"] \
-               == exp_output['fine']["scientific_name"]
-        assert out2['fine']["taxonomy_level_names"] \
-               == exp_output['fine']["taxonomy_level_names"]
-        assert out2['fine']["taxonomy_level_aliases"] \
-               == exp_output['fine']["taxonomy_level_aliases"]
-        assert out2['fine']["child_ids"] \
-               == exp_output['fine']["child_ids"]
-        assert np.isclose(out2['fine']["probability"],
-                          exp_output['fine']["probability"])
+        assert out2[level]["scientific_name"] \
+               == exp_output[level]["scientific_name"]
+        assert out2[level]["taxonomy_level_names"] \
+               == exp_output[level]["taxonomy_level_names"]
+        assert out2[level]["taxonomy_level_aliases"] \
+               == exp_output[level]["taxonomy_level_aliases"]
+        assert out2[level]["child_ids"] \
+               == exp_output[level]["child_ids"]
+        assert np.isclose(out2[level]["probability"],
+                          exp_output[level]["probability"])
+        if 'id' in exp_output[level]:
+            assert out2[level]["id"] == exp_output[level]["id"]
 
     # HC Cand: "other"
     coarse_pred = np.array([0.1])
-    # HC Cand: "other"
+    # HC Cand: "other" (wouldn't be other if not for previous level being other)
     medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.2])
-    # HC Cand: "other"
+    # HC Cand: "other" (wouldn't be other if not for previous level being other)
     fine_pred = np.array([0.7, 0.0, 0.0, 0.0, 0.0,
                           0.0, 0.0, 0.0, 0.0, 0.6,
                           0.0, 0.0, 0.0, 0.0, 0.3])
@@ -1071,23 +1105,25 @@ def test_apply_hierarchial_consistency():
     for level, cand_dict in out3.items():
         assert isinstance(cand_dict, dict)
         assert out3[level]["common_name"] == exp_output[level]["common_name"]
-        assert out3['fine']["scientific_name"] \
-               == exp_output['fine']["scientific_name"]
-        assert out3['fine']["taxonomy_level_names"] \
-               == exp_output['fine']["taxonomy_level_names"]
-        assert out3['fine']["taxonomy_level_aliases"] \
-               == exp_output['fine']["taxonomy_level_aliases"]
-        assert out3['fine']["child_ids"] \
-               == exp_output['fine']["child_ids"]
-        assert np.isclose(out3['fine']["probability"],
-                          exp_output['fine']["probability"])
+        assert out3[level]["scientific_name"] \
+               == exp_output[level]["scientific_name"]
+        assert out3[level]["taxonomy_level_names"] \
+               == exp_output[level]["taxonomy_level_names"]
+        assert out3[level]["taxonomy_level_aliases"] \
+               == exp_output[level]["taxonomy_level_aliases"]
+        assert out3[level]["child_ids"] \
+               == exp_output[level]["child_ids"]
+        assert np.isclose(out3[level]["probability"],
+                          exp_output[level]["probability"])
+        if 'id' in exp_output[level]:
+            assert out3[level]["id"] == exp_output[level]["id"]
 
 
     # HC Cand: "1"
     coarse_pred = np.array([0.9])
     # HC Cand: "other"
     medium_pred = np.array([0.1, 0.0, 0.0, 0.2, 0.8])
-    # HC Cand: "other"
+    # HC Cand: "other" (wouldn't be other if not for previous level being other)
     fine_pred = np.array([0.7, 0.0, 0.0, 0.0, 0.0,
                           0.0, 0.0, 0.0, 0.0, 0.6,
                           0.0, 0.0, 0.0, 0.0, 0.3])
@@ -1120,16 +1156,18 @@ def test_apply_hierarchial_consistency():
     for level, cand_dict in out4.items():
         assert isinstance(cand_dict, dict)
         assert out4[level]["common_name"] == exp_output[level]["common_name"]
-        assert out4['fine']["scientific_name"] \
-               == exp_output['fine']["scientific_name"]
-        assert out4['fine']["taxonomy_level_names"] \
-               == exp_output['fine']["taxonomy_level_names"]
-        assert out4['fine']["taxonomy_level_aliases"] \
-               == exp_output['fine']["taxonomy_level_aliases"]
-        assert out4['fine']["child_ids"] \
-               == exp_output['fine']["child_ids"]
-        assert np.isclose(out4['fine']["probability"],
-                          exp_output['fine']["probability"])
+        assert out4[level]["scientific_name"] \
+               == exp_output[level]["scientific_name"]
+        assert out4[level]["taxonomy_level_names"] \
+               == exp_output[level]["taxonomy_level_names"]
+        assert out4[level]["taxonomy_level_aliases"] \
+               == exp_output[level]["taxonomy_level_aliases"]
+        assert out4[level]["child_ids"] \
+               == exp_output[level]["child_ids"]
+        assert np.isclose(out4[level]["probability"],
+                          exp_output[level]["probability"])
+        if 'id' in exp_output[level]:
+            assert out4[level]["id"] == exp_output[level]["id"]
 
     # Test with custom level_threshold_dict
     level_threshold_dict = {
@@ -1137,7 +1175,7 @@ def test_apply_hierarchial_consistency():
         "medium": 0.99,
         "fine": 0.99
     }
-    # HC Cand: "other"
+    # HC Cand: "other" (due to threshold)
     coarse_pred = np.array([0.9])
     # HC Cand: "other"
     medium_pred = np.array([0.1, 0.0, 0.0, 0.8, 0.2])
@@ -1147,7 +1185,7 @@ def test_apply_hierarchial_consistency():
                           0.0, 0.0, 0.0, 0.0, 0.3])
     pred_list = [coarse_pred, medium_pred, fine_pred]
     formatted_pred_dict = format_pred(pred_list, taxonomy)
-    out1 = apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
+    out5 = apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
                                           level_threshold_dict=level_threshold_dict)
 
     exp_output = {}
@@ -1155,7 +1193,7 @@ def test_apply_hierarchial_consistency():
         "probability": 1 - coarse_pred[0],
         "common_name": "other",
         "scientific_name": "other",
-        "taxonomy_level_names": "medium",
+        "taxonomy_level_names": "coarse",
         "taxonomy_level_aliases": {},
         'child_ids': taxonomy["output_encoding"]["coarse"][-1]["ids"]
     }
@@ -1177,20 +1215,22 @@ def test_apply_hierarchial_consistency():
     }
 
     # Make sure output is in expected format
-    assert set(out1.keys()) == set(taxonomy["output_encoding"].keys())
-    for level, cand_dict in out1.items():
+    assert set(out5.keys()) == set(taxonomy["output_encoding"].keys())
+    for level, cand_dict in out5.items():
         assert isinstance(cand_dict, dict)
-        assert out1[level]["common_name"] == exp_output[level]["common_name"]
-        assert out1['fine']["scientific_name"] \
-               == exp_output['fine']["scientific_name"]
-        assert out1['fine']["taxonomy_level_names"] \
-               == exp_output['fine']["taxonomy_level_names"]
-        assert out1['fine']["taxonomy_level_aliases"] \
-               == exp_output['fine']["taxonomy_level_aliases"]
-        assert out1['fine']["child_ids"] \
-               == exp_output['fine']["child_ids"]
-        assert np.isclose(out1['fine']["probability"],
-                          exp_output['fine']["probability"])
+        assert out5[level]["common_name"] == exp_output[level]["common_name"]
+        assert out5[level]["scientific_name"] \
+               == exp_output[level]["scientific_name"]
+        assert out5[level]["taxonomy_level_names"] \
+               == exp_output[level]["taxonomy_level_names"]
+        assert out5[level]["taxonomy_level_aliases"] \
+               == exp_output[level]["taxonomy_level_aliases"]
+        assert out5[level]["child_ids"] \
+               == exp_output[level]["child_ids"]
+        assert np.isclose(out5[level]["probability"],
+                          exp_output[level]["probability"])
+        if 'id' in exp_output[level]:
+            assert out5[level]["id"] == exp_output[level]["id"]
 
     # Check invalid inputs
     pytest.raises(BirdVoxClassifyError, apply_hierarchical_consistency,
