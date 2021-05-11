@@ -71,7 +71,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/BirdVox/birdvoxclassify',
-    author='Jason Cramer, Vincent Lostanlen, Justin Salamon, ' +\
+    author='Aurora Cramer, Vincent Lostanlen, Justin Salamon, ' +\
         'Andrew Farnsworth, and Juan Pablo Bello',
     author_email='jtcramer@nyu.edu',
     packages=find_packages(),
