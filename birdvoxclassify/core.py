@@ -298,7 +298,7 @@ def format_pred_batch(batch_pred_list, taxonomy):
 
     Returns
     -------
-    pred_dict : list[dict]
+    pred_dict_list : list[dict]
         List of JSON dictionary objects
 
     """
@@ -451,7 +451,7 @@ def compute_pcen(audio, sr, input_format=True):
         err_msg = 'Invalid audio dtype: {}'
         raise BirdVoxClassifyError(err_msg.format(audio.dtype))
 
-    # Map to the range [-2**31, 2**31[
+    # Map to the range [-2**31, 2**31]
     audio = (audio * (2**31)).astype('float32')
 
     # Resample to 22,050 kHz
@@ -469,7 +469,7 @@ def compute_pcen(audio, sr, input_format=True):
     # Compute squared magnitude coefficients.
     abs2_stft = (stft.real*stft.real) + (stft.imag*stft.imag)
 
-    # Gather frequency bins according to the Mel scale.
+    # Gather frequency bindon't know if I have as good intuition about the impact of mel frequency bands here, though it is interesting to think of effect of different time-freq front-ends between the BVD and BVC. I guess s according to the Mel scale.
     # NB: as of librosa v0.6.2, melspectrogram is type-instable and thus
     # returns 64-bit output even with a 32-bit input. Therefore, we need
     # to convert PCEN to single precision eventually. This might not be
@@ -975,9 +975,6 @@ def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
                  for taxon_dict in formatted_pred_dict[level].values()
                  if 'id' in taxon_dict],
                 key=operator.itemgetter('probability'))
-        # Sanity check: make sure "other" probability is 1 - max in-vocab probability
-        assert np.isclose(other_dict['probability'],
-                          1 - invocab_cand_dict['probability'])
 
         if not other_reached:
             if prev_level is not None:
