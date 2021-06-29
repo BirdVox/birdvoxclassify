@@ -106,9 +106,9 @@ def parse_args(args):
              'enumerating all classes in output.')
 
     parser.add_argument(
-        '--hierarchical-consistency', '-H', action='store_true',
+        '--no-hierarchical-consistency', '-N', action='store_false',
         dest='hierarchical_consistency',
-        help='Apply hierarchical consistency when selecting best candidates.')
+        help='Do not apply hierarchical consistency when selecting best candidates.')
 
     parser.add_argument(
         '--model-name', '-c', default=DEFAULT_MODEL_NAME,

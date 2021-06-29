@@ -31,7 +31,7 @@ DEFAULT_MODEL_NAME = "{}-{}".format(MODEL_PREFIX, DEFAULT_MODEL_SUFFIX)
 
 def process_file(filepaths, output_dir=None, output_summary_path=None,
                  classifier=None, taxonomy=None, batch_size=512, suffix='',
-                 select_best_candidates=False, hierarchical_consistency=False,
+                 select_best_candidates=False, hierarchical_consistency=True,
                  logger_level=logging.INFO, model_name=DEFAULT_MODEL_NAME):
     """
     Runs bird species classification model on one or more audio clips.
@@ -40,29 +40,29 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
     ----------
     filepaths : list or str
         Filepath or list of filepaths of audio files for which to run prediction
-    output_dir : str or None [default: None]
+    output_dir : str or None [default: ``None``]
         Output directory used for outputting per-file prediction JSON files. If
         ``None``, no per-file prediction JSON files are produced.
-    output_summary_path : str or None [default: None]
+    output_summary_path : str or None [default: ``None``]
         Output path for summary prediction JSON file for all processed audio
         files. If ``None``, no summary prediction file is produced.
-    classifier : keras.models.Model or None [default: None]
+    classifier : keras.models.Model or None [default: ``None``]
         Bird species classification model object. If ``None``, the model
         corresponding to ``model_name`` is loaded.
-    taxonomy : dict or None [default: None]
+    taxonomy : dict or None [default: ``None``]
         Taxonomy JSON object. If ``None``, the taxonomy corresponding to
         ``model_name`` is loaded.
-    batch_size : int [default: 512]
+    batch_size : int [default: ``512``]
         Batch size for predictions
-    suffix : str [default: ""]
+    suffix : str [default: ``""``]
         String to append to filename
-    select_best_candidates : bool [default: False]
+    select_best_candidates : bool [default: ``False``]
         If ``True``, best candidates will be provided in output dictionary
         instead of all classes and their probabilities.
-    hierarchical_consistency : bool [default: False]
+    hierarchical_consistency : bool [default: ``True``]
         If ``True`` and if ``select_best_candidates`` is ``True``, apply
         hierarchical consistency when selecting best candidates.
-    logger_level : int [default: logging.INFO]
+    logger_level : int [default: ``logging.INFO``]
         Logger level
     model_name : str [default birdvoxclassify.DEFAULT_MODEL_NAME]
         Name of classifier model. Should be in format
@@ -252,7 +252,7 @@ def _validate_prediction(prediction, taxonomy):
     prediction : list or dict
         Unformatted prediction list or formatted prediction dictionary
         for a single example.
-    taxonomy : dict or None [default: None]
+    taxonomy : dict or None [default: ``None``]
         Taxonomy JSON object used to apply hierarchical consistency.
         If ``None``, then ``hierarchical_consistency`` must be ``False``.
 
@@ -355,7 +355,7 @@ def batch_generator(filepath_list, batch_size=512):
     filepath_list : list[str]
         (Non-empty) list of filepaths to audio files for which to generate
         batches of PCEN images and the corresponding filenames
-    batch_size : int [default: 512]
+    batch_size : int [default: ``512``]
         Size of yielded batches
 
     Yields
@@ -422,7 +422,7 @@ def compute_pcen(audio, sr, input_format=True):
         Audio array
     sr : int
         Sample rate
-    input_format : bool [default: True]
+    input_format : bool [default: ``True``]
         If True, adds an additional channel dimension (of size 1) and ensures
         that a fixed number of PCEN frames (corresponding to
         ``get_pcen_settings()['n_hops']``) is returned. If number of frames is
@@ -534,7 +534,7 @@ def predict(pcen, classifier, logger_level=logging.INFO):
         PCEN array for a single clip or a batch of clips
     classifier : keras.models.Model
         Bird species classification model object
-    logger_level : int [default: logging.INFO]
+    logger_level : int [default: ``logging.INFO``]
         Logger level
 
     Returns
@@ -760,22 +760,22 @@ def get_taxonomy_path(model_name):
 def get_batch_best_candidates(batch_pred_list=None,
                               batch_formatted_pred_list=None,
                               taxonomy=None,
-                              hierarchical_consistency=False):
+                              hierarchical_consistency=True):
     """
     Obtain the best candidate classes for each prediction in a batch.
 
     Parameters
     ----------
-    batch_pred_list : list or None [default: None]
+    batch_pred_list : list or None [default: ``None``]
         List of batch predictions. If not provided,
         ``batch_formatted_pred_list`` must be provided.
-    batch_formatted_pred_list : list or None [default: None]
+    batch_formatted_pred_list : list or None [default: ``None``]
         List of formatted batch predictions. If not provided,
         ``batch_pred_list`` must be provided.
-    taxonomy : dict or None [default: None]
+    taxonomy : dict or None [default: ``None``]
         Taxonomy JSON object used to apply hierarchical consistency.
         If ``None``, then ``hierarchical_consistency`` must be ``False``.
-    hierarchical_consistency : bool [default: False]
+    hierarchical_consistency : bool [default: ``True``]
         If ``True``, apply hierarchical consistency to predictions.
 
     Returns
@@ -807,7 +807,7 @@ def get_batch_best_candidates(batch_pred_list=None,
 
 
 def get_best_candidates(pred_list=None, formatted_pred_dict=None, taxonomy=None,
-                        hierarchical_consistency=False):
+                        hierarchical_consistency=True):
     """
     Obtain the best predicted candidate class for a prediction at all
     taxonomic levels. The output will be in the following format:
@@ -828,17 +828,17 @@ def get_best_candidates(pred_list=None, formatted_pred_dict=None, taxonomy=None,
 
     Parameters
     ----------
-    pred_list : list[np.ndarray [shape (1, num_labels) or (num_labels,)] or None [default: None]
+    pred_list : list[np.ndarray [shape (1, num_labels) or (num_labels,)] or None [default: ``None``]
         List of predictions at the taxonomical levels predicted by the model
         for a single example. If not provided,
         ``formatted_pred_dict`` must be provided.
-    formatted_pred_dict : dict or None [default: None]
+    formatted_pred_dict : dict or None [default: ``None``]
         Formatted dictionary of predictions. If not provided,
         ``pred_list`` must be provided.
-    taxonomy : dict or None [default: None]
+    taxonomy : dict or None [default: ``None``]
         Taxonomy JSON object used to apply hierarchical consistency.
         If ``None``, then ``hierarchical_consistency`` must be ``False``.
-    hierarchical_consistency : bool [default: False]
+    hierarchical_consistency : bool [default: ``True``]
         If ``True``, apply hierarchical consistency to predictions.
 
     Returns
@@ -918,13 +918,13 @@ def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
     ----------
     formatted_pred_dict : dict
         Formatted dictionary of predictions.
-    taxonomy : dict or None [default: None]
+    taxonomy : dict or None [default: ``None``]
         Taxonomy JSON object used to apply hierarchical consistency.
         If ``None``, then ``hierarchical_consistency`` must be ``False``.
-    level_threshold_dict : dict or None [default: None]
+    level_threshold_dict : dict or None [default: ``None``]
         Optional dictionary of detection thresholds for each
         taxonomic level.
-    detection_threshold : float [default: 0.5]
+    detection_threshold : float [default: ``0.5``]
         Detection threshold applied uniformly to all classes
         at all levels. If ``level_threshold_dict`` is provided, this
         is ignored.

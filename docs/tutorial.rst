@@ -31,13 +31,13 @@ You can simply compute bird species predictions out of the box, like so:
     formatted_pred = process_file(filepath)
     # Prediction for a list of files
     formatted_pred = process_file(filepath_list)
-    # Dictionary of best predicted candidates for a list of files
+    # Dictionary of best predicted candidates for a list of files. Hierarchical consistency is applied by default.
     best_candidates = process_file(filepath_list,
                                    select_best_candidates=True)
-    # Get hierarchically consistent candidates
+    # Get candidates without applying hierarchical consistency
     best_candidates = process_file(filepath_list,
                                    select_best_candidates=True,
-                                   hierarchical_consistency=True)
+                                   hierarchical_consistency=False)
 
     ## Save individual output files for each audio file
     process_file(filepath_list, output_dir='/output/dir')
@@ -85,11 +85,11 @@ You can also compute predictions directly on loaded audio arrays:
 
     # Select best candidates from prediction
     best_candidates = get_best_candidates(pred_list=pred_list, taxonomy=taxonomy)
-    # Can use prediction list or formatted prediction dict
+    # Can use prediction list or formatted prediction dict. Hierarchical consistency is applied by default.
     best_candidates = get_best_candidates(formatted_pred_dict=formatted_pred)
-    # Get hierarchically consistent candidates
+    # Get candidates without applying hierarchical consistency
     best_candidates = get_best_candidates(formatted_pred_dict=formatted_pred,
-                                          hierarchical_consistency=True,
+                                          hierarchical_consistency=False,
                                           taxonomy=taxonomy)
 
 
