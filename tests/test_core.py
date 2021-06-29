@@ -823,9 +823,11 @@ def test_get_batch_best_candidates():
     exp_output_batch = [exp_output] * 10
 
     batch_best_cand_list = get_batch_best_candidates(
-        batch_formatted_pred_list=batch_formatted_pred_list)
+        batch_formatted_pred_list=batch_formatted_pred_list,
+        hierarchical_consistency=False)
     batch_best_cand_list_2 = get_batch_best_candidates(
         batch_pred_list=batch_pred_list,
+        hierarchical_consistency=False,
         taxonomy=taxonomy
     )
 
@@ -875,8 +877,7 @@ def test_get_batch_best_candidates():
                   batch_pred_list=batch_pred_list,
                   batch_formatted_pred_list=batch_formatted_pred_list)
     pytest.raises(BirdVoxClassifyError, get_batch_best_candidates,
-                  batch_formatted_pred_list=batch_formatted_pred_list,
-                  taxonomy=None, hierarchical_consistency=True)
+                  batch_formatted_pred_list=batch_formatted_pred_list)
 
 
 def test_get_best_candidates():
