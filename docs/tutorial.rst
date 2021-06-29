@@ -83,14 +83,14 @@ You can also compute predictions directly on loaded audio arrays:
     # Format prediction in more interpretable format
     formatted_pred = bvc.format_pred(pred_list, taxonomy)
 
-    # Select best candidates from prediction
+    # Select best candidates from prediction. Hierarchical consistency is applied by default.
     best_candidates = get_best_candidates(pred_list=pred_list, taxonomy=taxonomy)
-    # Can use prediction list or formatted prediction dict. Hierarchical consistency is applied by default.
-    best_candidates = get_best_candidates(formatted_pred_dict=formatted_pred)
+    # Can use prediction list or formatted prediction dict.
+    best_candidates = get_best_candidates(formatted_pred_dict=formatted_pred,
+                                          taxonomy=taxonomy)
     # Get candidates without applying hierarchical consistency
     best_candidates = get_best_candidates(formatted_pred_dict=formatted_pred,
-                                          hierarchical_consistency=False,
-                                          taxonomy=taxonomy)
+                                          hierarchical_consistency=False)
 
 
 Using the Command Line Interface (CLI)
@@ -108,11 +108,11 @@ This will print out the model prediction in JSON format. If you wish, you can ou
 
     $ birdvoxclassify -B /path/to/file.wav
 
-This will print out the best candidates under the model prediction in JSON format. You can also enforce that the candidates are hierarchically consistent:
+This will print out the best candidates under the model prediction in JSON format. BirdVoxClassify applies hierarchical consistency to the candidates, but it can be disabled as follows:
 
 .. code-block:: shell
 
-    $ birdvoxclassify -B -H /path/to/file.wav
+    $ birdvoxclassify -B -N /path/to/file.wav
 
 You can also provide multiple input files or directories:
 

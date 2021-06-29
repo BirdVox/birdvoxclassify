@@ -830,8 +830,8 @@ def get_best_candidates(pred_list=None, formatted_pred_dict=None, taxonomy=None,
     ----------
     pred_list : list[np.ndarray [shape (1, num_labels) or (num_labels,)] or None [default: ``None``]
         List of predictions at the taxonomical levels predicted by the model
-        for a single example. If not provided,
-        ``formatted_pred_dict`` must be provided.
+        for a single example. If provided, ``taxonomy``, must also be provided.
+         If not provided, ``formatted_pred_dict`` must be provided.
     formatted_pred_dict : dict or None [default: ``None``]
         Formatted dictionary of predictions. If not provided,
         ``pred_list`` must be provided.

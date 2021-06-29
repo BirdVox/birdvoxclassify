@@ -892,7 +892,8 @@ def test_get_best_candidates():
                           0.0, 0.0, 0.0, 0.0, 0.3])
     pred_list = [coarse_pred, medium_pred, fine_pred]
     formatted_pred_dict = format_pred(pred_list, taxonomy)
-    out1 = get_best_candidates(formatted_pred_dict=formatted_pred_dict)
+    out1 = get_best_candidates(formatted_pred_dict=formatted_pred_dict,
+                               hierarchical_consistency=False)
 
     exp_output = {}
     exp_output['coarse'] = {'probability': coarse_pred[0]}
@@ -922,7 +923,9 @@ def test_get_best_candidates():
 
     # Make sure passing in pred_list or formatted_pred_dict results in the same
     # output
-    out2 = get_best_candidates(pred_list=pred_list, taxonomy=taxonomy)
+    out2 = get_best_candidates(pred_list=pred_list,
+                               taxonomy=taxonomy,
+                               hierarchical_consistency=False)
     for level in out1.keys():
         assert set(out1[level].keys()) == set(out2[level].keys())
         for k in out1[level].keys():
@@ -930,7 +933,6 @@ def test_get_best_candidates():
 
     # Make sure hierarchical consistency is correctly applied
     out3 = get_best_candidates(formatted_pred_dict=formatted_pred_dict,
-                               hierarchical_consistency=True,
                                taxonomy=taxonomy)
     exp_output = {}
     exp_output['coarse'] = {'probability': coarse_pred[0]}
@@ -962,17 +964,16 @@ def test_get_best_candidates():
     pytest.raises(BirdVoxClassifyError, get_best_candidates,
                   pred_list=pred_list, formatted_pred_dict=formatted_pred_dict)
     pytest.raises(BirdVoxClassifyError, get_best_candidates,
-                  formatted_pred_dict=formatted_pred_dict,
-                  taxonomy=None, hierarchical_consistency=True)
+                  formatted_pred_dict=formatted_pred_dict, taxonomy=None)
     pytest.raises(BirdVoxClassifyError, get_best_candidates,
                   pred_list=pred_list, taxonomy=None)
 
     # Make sure a real prediction makes it through the pipeline with no problem
     output = process_file(CHIRP_PATH, model_name=MODEL_NAME)
     formatted_pred_dict = [x for x in output.values()][0]
-    out1 = get_best_candidates(formatted_pred_dict=formatted_pred_dict)
+    out1 = get_best_candidates(formatted_pred_dict=formatted_pred_dict,
+                               hierarchical_consistency=False)
     out2 = get_best_candidates(formatted_pred_dict=formatted_pred_dict,
-                               hierarchical_consistency=True,
                                taxonomy=taxonomy)
 
 

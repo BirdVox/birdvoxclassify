@@ -71,7 +71,7 @@ def test_parse_args():
     assert args.output_dir is None
     assert args.output_summary_path is None
     assert args.select_best_candidates is False
-    assert args.hierarchical_consistency is False
+    assert args.hierarchical_consistency is True
     assert args.model_name == MODEL_NAME
     assert args.batch_size == 512
     assert args.suffix == ""
@@ -86,13 +86,13 @@ def test_parse_args():
             '-b', '16',
             '-s', 'suffix',
             '-B',
-            '-H',
+            '-N',
             '-q']
     args = parse_args(args)
     assert args.output_dir == '/tmp/output/dir'
     assert args.output_summary_path == '/tmp/summary.json'
     assert args.select_best_candidates is True
-    assert args.hierarchical_consistency is True
+    assert args.hierarchical_consistency is False
     assert args.model_name == MODEL_NAME
     assert args.batch_size == 16
     assert args.suffix == 'suffix'
