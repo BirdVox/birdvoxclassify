@@ -38,19 +38,25 @@ else:
                 print('Downloading weight file {} ...'.format(compressed_file))
                 urlretrieve(base_url + compressed_file, compressed_path)
 
-            # Handle symlinks
-            if os.path.islink(compressed_path):
-                os.remove(compressed_path)
-                real_compressed_file \
-                    = os.path.basename(os.path.realpath(compressed_path))
-                msg = '{} is symlink, downloading {} ...'
-                print(msg.format(compressed_file, real_compressed_file))
-                urlretrieve(base_url + real_compressed_file, compressed_path)
-
             print('Decompressing ...')
-            with gzip.open(compressed_path, 'rb') as source:
-                with open(weight_path, 'wb') as target:
-                    target.write(source.read())
+            with open(weight_path, 'wb') as target:
+                try:
+                    with gzip.open(compressed_path, 'rb') as source:
+                        target.write(source.read())
+                except OSError:
+                    # Handle symlinks
+                    with open(compressed_path) as symlink:
+                        # Github raw stores symlinks as text files, so we need
+                        # to read it to check the text 
+                        real_compressed_file = symlink.read()
+                    os.remove(compressed_path)
+                    msg = '{} is symlink, downloading {} ...'
+                    print(msg.format(compressed_file, real_compressed_file))
+                    urlretrieve(base_url + real_compressed_file,
+                                compressed_path)
+                    with gzip.open(compressed_path, 'rb') as source:
+                        target.write(source.read())
+
             print('Decompression complete')
             os.remove(compressed_path)
             print('Removing compressed file')
