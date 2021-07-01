@@ -11,8 +11,8 @@ except ImportError:
 model_dir = os.path.join('birdvoxclassify', 'resources', 'models')
 taxonomy_dir = os.path.join('birdvoxclassify', 'resources', 'taxonomy')
 suffixes = [
-    'flat-multitask-convnet-v2_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc',
-    'taxonet_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc'
+    'flat-multitask-convnet-v2_tv1hierarchical-3c6d869456b2705ea5805b6b7d08f870',
+    'taxonet_tv1hierarchical-3c6d869456b2705ea5805b6b7d08f870'
 ]
 
 model_prefix = 'birdvoxclassify'
@@ -28,7 +28,7 @@ if len(sys.argv) > 1 and sys.argv[1] == 'sdist':
 else:
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
-    # in all other cases, decompress the weights file if necessary
+    # in all other cases, download and decompress weight files
     for weight_file in weight_files:
         weight_path = os.path.join(model_dir, weight_file)
         if not os.path.isfile(weight_path):
@@ -37,10 +37,26 @@ else:
             if not os.path.isfile(compressed_file):
                 print('Downloading weight file {} ...'.format(compressed_file))
                 urlretrieve(base_url + compressed_file, compressed_path)
+
             print('Decompressing ...')
-            with gzip.open(compressed_path, 'rb') as source:
-                with open(weight_path, 'wb') as target:
-                    target.write(source.read())
+            with open(weight_path, 'wb') as target:
+                try:
+                    with gzip.open(compressed_path, 'rb') as source:
+                        target.write(source.read())
+                except OSError:
+                    # Handle symlinks
+                    with open(compressed_path) as symlink:
+                        # Github raw stores symlinks as text files, so we need
+                        # to read it to check the text 
+                        real_compressed_file = symlink.read()
+                    os.remove(compressed_path)
+                    msg = '{} is symlink, downloading {} ...'
+                    print(msg.format(compressed_file, real_compressed_file))
+                    urlretrieve(base_url + real_compressed_file,
+                                compressed_path)
+                    with gzip.open(compressed_path, 'rb') as source:
+                        target.write(source.read())
+
             print('Decompression complete')
             os.remove(compressed_path)
             print('Removing compressed file')
@@ -71,7 +87,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/BirdVox/birdvoxclassify',
-    author='Jason Cramer, Vincent Lostanlen, Justin Salamon, ' +\
+    author='Aurora Cramer, Vincent Lostanlen, Justin Salamon, ' +\
         'Andrew Farnsworth, and Juan Pablo Bello',
     author_email='jtcramer@nyu.edu',
     packages=find_packages(),
@@ -101,8 +117,7 @@ setup(
         'resampy>=0.2.0',
         'h5py>=2.7.0,<3.0.0',
         'pandas>=0.23',
-        'tensorflow>=2.0.0',
-        'six>=1.12.0'
+        'tensorflow>=2.0.0'
     ],
     extras_require={
         'docs': [

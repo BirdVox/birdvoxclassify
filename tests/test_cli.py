@@ -17,7 +17,7 @@ TEST_AUDIO_DIR = os.path.join(os.path.dirname(__file__), 'data/audio')
 CHIRP_PATH = os.path.join(TEST_AUDIO_DIR, 'synth_chirp.wav')
 
 MODEL_SUFFIX = "taxonet_tv1hierarchical" \
-               "-2e7e1bbd434a35b3961e315cfe3832fc"
+               "-3c6d869456b2705ea5805b6b7d08f870"
 MODEL_NAME = "birdvoxclassify-{}".format(MODEL_SUFFIX)
 
 
@@ -70,6 +70,8 @@ def test_parse_args():
     args = parse_args(args)
     assert args.output_dir is None
     assert args.output_summary_path is None
+    assert args.select_best_candidates is False
+    assert args.hierarchical_consistency is True
     assert args.model_name == MODEL_NAME
     assert args.batch_size == 512
     assert args.suffix == ""
@@ -83,10 +85,14 @@ def test_parse_args():
             '-c', MODEL_NAME,
             '-b', '16',
             '-s', 'suffix',
+            '-B',
+            '-N',
             '-q']
     args = parse_args(args)
     assert args.output_dir == '/tmp/output/dir'
     assert args.output_summary_path == '/tmp/summary.json'
+    assert args.select_best_candidates is True
+    assert args.hierarchical_consistency is False
     assert args.model_name == MODEL_NAME
     assert args.batch_size == 16
     assert args.suffix == 'suffix'
@@ -200,6 +206,15 @@ def test_run(capsys):
     # expected_message = expected_message.format(str([tempdir]))
     # assert captured.out == expected_message
 
+    # test best candidates
+    string_input = CHIRP_PATH
+    tempdir = tempfile.mkdtemp()
+    run(string_input, output_dir=tempdir, select_best_candidates=True,
+        hierarchical_consistency=True)
+    outfile = os.path.join(tempdir, 'synth_chirp.json')
+    assert os.path.exists(outfile)
+    shutil.rmtree(tempdir)
+
     # test string input
     string_input = CHIRP_PATH
     tempdir = tempfile.mkdtemp()
@@ -222,3 +237,4 @@ def test_run(capsys):
     outfile = os.path.join(tempdir, 'synth_chirp.json')
     assert os.path.exists(outfile)
     shutil.rmtree(tempdir)
+

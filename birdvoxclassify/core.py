@@ -4,11 +4,12 @@ import hashlib
 import json
 import sys
 import numpy as np
-import six
+import operator
 import os
 import warnings
 import traceback
 import soundfile as sf
+from collections import OrderedDict
 from contextlib import redirect_stderr
 
 with warnings.catch_warnings():
@@ -23,13 +24,14 @@ with warnings.catch_warnings():
 from .birdvoxclassify_exceptions import BirdVoxClassifyError
 
 DEFAULT_MODEL_SUFFIX = "taxonet_tv1hierarchical" \
-                       "-2e7e1bbd434a35b3961e315cfe3832fc"
+                       "-3c6d869456b2705ea5805b6b7d08f870"
 MODEL_PREFIX = 'birdvoxclassify'
 DEFAULT_MODEL_NAME = "{}-{}".format(MODEL_PREFIX, DEFAULT_MODEL_SUFFIX)
 
 
 def process_file(filepaths, output_dir=None, output_summary_path=None,
                  classifier=None, taxonomy=None, batch_size=512, suffix='',
+                 select_best_candidates=False, hierarchical_consistency=True,
                  logger_level=logging.INFO, model_name=DEFAULT_MODEL_NAME):
     """
     Runs bird species classification model on one or more audio clips.
@@ -38,23 +40,29 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
     ----------
     filepaths : list or str
         Filepath or list of filepaths of audio files for which to run prediction
-    output_dir : str or None [default: None]
+    output_dir : str or None [default: ``None``]
         Output directory used for outputting per-file prediction JSON files. If
         ``None``, no per-file prediction JSON files are produced.
-    output_summary_path : str or None [default: None]
+    output_summary_path : str or None [default: ``None``]
         Output path for summary prediction JSON file for all processed audio
         files. If ``None``, no summary prediction file is produced.
-    classifier : keras.models.Model or None [default: None]
+    classifier : keras.models.Model or None [default: ``None``]
         Bird species classification model object. If ``None``, the model
         corresponding to ``model_name`` is loaded.
-    taxonomy : dict or None [default: None]
+    taxonomy : dict or None [default: ``None``]
         Taxonomy JSON object. If ``None``, the taxonomy corresponding to
         ``model_name`` is loaded.
-    batch_size : int [default: 512]
+    batch_size : int [default: ``512``]
         Batch size for predictions
-    suffix : str [default: ""]
+    suffix : str [default: ``""``]
         String to append to filename
-    logger_level : int [default: logging.INFO]
+    select_best_candidates : bool [default: ``False``]
+        If ``True``, best candidates will be provided in output dictionary
+        instead of all classes and their probabilities.
+    hierarchical_consistency : bool [default: ``True``]
+        If ``True`` and if ``select_best_candidates`` is ``True``, apply
+        hierarchical consistency when selecting best candidates.
+    logger_level : int [default: ``logging.INFO``]
         Logger level
     model_name : str [default birdvoxclassify.DEFAULT_MODEL_NAME]
         Name of classifier model. Should be in format
@@ -63,8 +71,10 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
     Returns
     -------
     output_dict : dict[str, dict]
-        Output dictionary mapping audio filename to prediction dictionary, in
-        the format produced by ``format_pred``.
+        Output dictionary mapping audio filename to prediction dictionary. If
+        ``select_best_candidates`` is ``False``, the dictionary is in the format
+        produced by ``format_pred``. Otherwise, the dictionary is in the format
+        produced by ``get_best_candidates``.
     """
     # Set logger level.
     logging.getLogger().setLevel(logger_level)
@@ -78,15 +88,14 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
 
     if taxonomy is None:
         taxonomy_path = get_taxonomy_path(model_name)
-        with open(taxonomy_path) as f:
-            taxonomy = json.load(f)
+        taxonomy = load_taxonomy(taxonomy_path)
 
     # Create output_dir if necessary.
     if output_dir is not None:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-    if isinstance(filepaths, six.string_types):
+    if isinstance(filepaths, str):
         filepaths = [filepaths]
 
     batch_gen = batch_generator(filepaths, batch_size=batch_size)
@@ -100,7 +109,15 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
             pred = [p[idx] for p in batch_pred]
             pred_dict = format_pred(pred, taxonomy)
 
-            output_dict[filepath] = pred_dict
+            if select_best_candidates:
+                file_dict = get_best_candidates(
+                    formatted_pred_dict=pred_dict,
+                    taxonomy=taxonomy,
+                    hierarchical_consistency=hierarchical_consistency)
+            else:
+                file_dict = pred_dict
+
+            output_dict[filepath] = file_dict
 
             if output_dir:
                 output_path = get_output_path(filepath,
@@ -154,22 +171,16 @@ def format_pred(pred_list, taxonomy):
 
     Returns
     -------
-    pred_dict : dict
+    formatted_pred_dict : dict
         Prediction dictionary object
 
     """
-    if len(pred_list) != len(taxonomy['output_encoding']):
-        err_msg = "Taxonomy expects {} outputs but model produced {} outputs."
-        raise BirdVoxClassifyError(err_msg.format(
-            len(taxonomy['output_encoding']), len(pred_list)
-        ))
-
-    pred_dict = {}
-
+    _validate_prediction(pred_list, taxonomy)
+    formatted_pred_dict = {}
     encoding_items = taxonomy['output_encoding'].items()
     for pred, (level, encoding_list) in zip(pred_list, encoding_items):
 
-        pred_dict[level] = {}
+        formatted_pred_dict[level] = {}
 
         if pred.ndim == 2:
             if pred.shape[0] != 1:
@@ -178,19 +189,28 @@ def format_pred(pred_list, taxonomy):
                 raise BirdVoxClassifyError(err_msg)
             pred = pred.flatten()
 
+        # Handle the binary case
+        if pred.shape[-1] == 1:
+            pred = np.concatenate([pred, 1.0-pred], axis=-1)
+
         for prob, item in zip(pred, encoding_list):
+            # Assumption: only "other" class has more than one ref id
+            # Get reference id
             if len(item['ids']) == 1:
                 ref_id = item['ids'][0]
             else:
                 ref_id = "other"
 
-            pred_dict[level][ref_id] = {'probability': float(prob)}
+            # Set probability
+            formatted_pred_dict[level][ref_id] = {'probability': float(prob)}
 
             if ref_id != "other":
-                pred_dict[level][ref_id].update(get_taxonomy_node(ref_id,
-                                                                  taxonomy))
+                # Update dictionary with taxonomy information
+                formatted_pred_dict[level][ref_id].update(
+                    get_taxonomy_node(ref_id, taxonomy))
             else:
-                pred_dict[level][ref_id].update({
+                # Update dictionary with "other" taxonomy information
+                formatted_pred_dict[level][ref_id].update({
                     "common_name": "other",
                     "scientific_name": "other",
                     "taxonomy_level_names": level,
@@ -198,7 +218,65 @@ def format_pred(pred_list, taxonomy):
                     "child_ids": item['ids']
                 })
 
-    return pred_dict
+    return formatted_pred_dict
+
+
+def _validate_batch_pred_list(batch_pred_list):
+    """
+    Perform sanity check on a list of batch predictions to ensure that the
+    number of predictions for each level are consistent.
+
+
+    Parameters
+    ----------
+    batch_pred_list : list[np.ndarray [shape (batch_size, num_labels)] ]
+        List of predictions at the taxonomical levels predicted by the model
+        for a batch of examples. ``num_labels`` may be different for each of the
+        different levels of the taxonomy.
+
+    """
+    for level_pred in batch_pred_list:
+        if len(level_pred) != len(batch_pred_list[0]):
+            err_msg = 'Number of predictions for each level are not consistent.'
+            raise BirdVoxClassifyError(err_msg)
+
+
+def _validate_prediction(prediction, taxonomy):
+    """
+    Perform sanity check on a prediction to ensure that the number of
+    classes in each prediction are consistent with the given taxonomy.
+
+
+    Parameters
+    ----------
+    prediction : list or dict
+        Unformatted prediction list or formatted prediction dictionary
+        for a single example.
+    taxonomy : dict or None [default: ``None``]
+        Taxonomy JSON object used to apply hierarchical consistency.
+        If ``None``, then ``hierarchical_consistency`` must be ``False``.
+
+    """
+    if len(prediction) != len(taxonomy['output_encoding']):
+        err_msg = "Taxonomy expects {} outputs but model produced {} outputs."
+        raise BirdVoxClassifyError(err_msg.format(
+            len(taxonomy['output_encoding']), len(prediction)
+        ))
+    for idx, (level, encoding_list) \
+            in enumerate(taxonomy['output_encoding'].items()):
+        if type(prediction) == list:
+            n_classes_est = prediction[idx].shape[-1]
+        else:
+            n_classes_est = len(prediction[level])
+        n_classes_exp = len(encoding_list)
+        if (n_classes_est != n_classes_exp) \
+                and not (n_classes_est == 1 and n_classes_exp == 2):
+            # Note that we make an exception for the binary case
+            err_msg = "Taxonomy expects {} classes at level {} but model " \
+                      "predicted {} classes."
+            raise BirdVoxClassifyError(err_msg.format(
+                n_classes_exp, level, n_classes_est
+            ))
 
 
 def format_pred_batch(batch_pred_list, taxonomy):
@@ -220,15 +298,11 @@ def format_pred_batch(batch_pred_list, taxonomy):
 
     Returns
     -------
-    pred_dict : list[dict]
+    pred_dict_list : list[dict]
         List of JSON dictionary objects
 
     """
-    for level_pred in batch_pred_list:
-        if len(level_pred) != len(batch_pred_list[0]):
-            err_msg = 'Number of predictions for each level are not consistent.'
-            raise BirdVoxClassifyError(err_msg)
-
+    _validate_batch_pred_list(batch_pred_list)
     pred_dict_list = []
     for idx in range(len(batch_pred_list[0])):
         pred_list = [p[idx] for p in batch_pred_list]
@@ -281,7 +355,7 @@ def batch_generator(filepath_list, batch_size=512):
     filepath_list : list[str]
         (Non-empty) list of filepaths to audio files for which to generate
         batches of PCEN images and the corresponding filenames
-    batch_size : int [default: 512]
+    batch_size : int [default: ``512``]
         Size of yielded batches
 
     Yields
@@ -348,7 +422,7 @@ def compute_pcen(audio, sr, input_format=True):
         Audio array
     sr : int
         Sample rate
-    input_format : bool [default: True]
+    input_format : bool [default: ``True``]
         If True, adds an additional channel dimension (of size 1) and ensures
         that a fixed number of PCEN frames (corresponding to
         ``get_pcen_settings()['n_hops']``) is returned. If number of frames is
@@ -377,7 +451,7 @@ def compute_pcen(audio, sr, input_format=True):
         err_msg = 'Invalid audio dtype: {}'
         raise BirdVoxClassifyError(err_msg.format(audio.dtype))
 
-    # Map to the range [-2**31, 2**31[
+    # Map to the range [-2**31, 2**31]
     audio = (audio * (2**31)).astype('float32')
 
     # Resample to 22,050 kHz
@@ -395,7 +469,7 @@ def compute_pcen(audio, sr, input_format=True):
     # Compute squared magnitude coefficients.
     abs2_stft = (stft.real*stft.real) + (stft.imag*stft.imag)
 
-    # Gather frequency bins according to the Mel scale.
+    # Gather frequency bindon't know if I have as good intuition about the impact of mel frequency bands here, though it is interesting to think of effect of different time-freq front-ends between the BVD and BVC. I guess s according to the Mel scale.
     # NB: as of librosa v0.6.2, melspectrogram is type-instable and thus
     # returns 64-bit output even with a 32-bit input. Therefore, we need
     # to convert PCEN to single precision eventually. This might not be
@@ -460,7 +534,7 @@ def predict(pcen, classifier, logger_level=logging.INFO):
         PCEN array for a single clip or a batch of clips
     classifier : keras.models.Model
         Bird species classification model object
-    logger_level : int [default: logging.INFO]
+    logger_level : int [default: ``logging.INFO``]
         Logger level
 
     Returns
@@ -681,3 +755,269 @@ def get_taxonomy_path(model_name):
         ))
 
     return taxonomy_path
+
+
+def get_batch_best_candidates(batch_pred_list=None,
+                              batch_formatted_pred_list=None,
+                              taxonomy=None,
+                              hierarchical_consistency=True):
+    """
+    Obtain the best candidate classes for each prediction in a batch.
+
+    Parameters
+    ----------
+    batch_pred_list : list or None [default: ``None``]
+        List of batch predictions. If not provided,
+        ``batch_formatted_pred_list`` must be provided.
+    batch_formatted_pred_list : list or None [default: ``None``]
+        List of formatted batch predictions. If not provided,
+        ``batch_pred_list`` must be provided.
+    taxonomy : dict or None [default: ``None``]
+        Taxonomy JSON object used to apply hierarchical consistency.
+        If ``None``, then ``hierarchical_consistency`` must be ``False``.
+    hierarchical_consistency : bool [default: ``True``]
+        If ``True``, apply hierarchical consistency to predictions.
+
+    Returns
+    -------
+    batch_best_candidates_list : list
+        List of formatted dictionaries specifying the best candidates
+        for each taxonomic level.
+
+    """
+    if (batch_pred_list is not None) == (batch_formatted_pred_list is not None):
+        err_msg = "Both batch_pred_list and batch_formatted_pred_dict were, " \
+                  "provided, but only one can be provided."
+        raise BirdVoxClassifyError(err_msg)
+
+    if hierarchical_consistency and taxonomy is None:
+        err_msg = "Must provide taxonomy if hierarchical consistency is applied."
+        raise BirdVoxClassifyError(err_msg)
+
+    if batch_formatted_pred_list is None:
+        batch_formatted_pred_list = format_pred_batch(batch_pred_list, taxonomy)
+
+    batch_best_candidates_list = []
+    for formatted_pred_dict in batch_formatted_pred_list:
+        best_candidate_dict = get_best_candidates(
+            formatted_pred_dict=formatted_pred_dict, taxonomy=taxonomy,
+            hierarchical_consistency=hierarchical_consistency)
+        batch_best_candidates_list.append(best_candidate_dict)
+    return batch_best_candidates_list
+
+
+def get_best_candidates(pred_list=None, formatted_pred_dict=None, taxonomy=None,
+                        hierarchical_consistency=True):
+    """
+    Obtain the best predicted candidate class for a prediction at all
+    taxonomic levels. The output will be in the following format:
+
+    .. code-block:: javascript
+
+        {
+          <prediction level> : {
+            "probability": <float>,
+            "common_name": <str>,
+            "scientific_name": <str>,
+            "taxonomy_level_names": <str>,
+            "taxonomy_level_aliases": <dict of aliases>,
+            "child_ids": <list of children IDs>
+          },
+          ...
+        }
+
+    Parameters
+    ----------
+    pred_list : list[np.ndarray [shape (1, num_labels) or (num_labels,)] or None [default: ``None``]
+        List of predictions at the taxonomical levels predicted by the model
+        for a single example. If provided, ``taxonomy``, must also be provided.
+         If not provided, ``formatted_pred_dict`` must be provided.
+    formatted_pred_dict : dict or None [default: ``None``]
+        Formatted dictionary of predictions. If not provided,
+        ``pred_list`` must be provided.
+    taxonomy : dict or None [default: ``None``]
+        Taxonomy JSON object used to apply hierarchical consistency.
+        If ``None``, then ``hierarchical_consistency`` must be ``False``.
+    hierarchical_consistency : bool [default: ``True``]
+        If ``True``, apply hierarchical consistency to predictions.
+
+    Returns
+    -------
+    best_candidates_dict : dict
+        Formatted dictionary specifying the best candidate
+        for each taxonomic level.
+
+    """
+    if (pred_list is not None) == (formatted_pred_dict is not None):
+        err_msg = "Both pred_list and formatted_pred_dict were provided, " \
+                  "but only one can be provided."
+        raise BirdVoxClassifyError(err_msg)
+
+    if hierarchical_consistency and taxonomy is None:
+        err_msg = "Must provide taxonomy if hierarchical consistency is applied."
+        raise BirdVoxClassifyError(err_msg)
+
+    if formatted_pred_dict is None:
+        if taxonomy is None:
+            err_msg = "Must provide taxonomy if unformatted prediction is provided."
+            raise BirdVoxClassifyError(err_msg)
+        # Format prediction if not provided
+        formatted_pred_dict = format_pred(pred_list, taxonomy)
+
+    if hierarchical_consistency:
+        return apply_hierarchical_consistency(formatted_pred_dict, taxonomy)
+    else:
+        # Simply get the taxon dict w/ maximum probability, with no
+        # consistency enforced
+        return {level: max(taxon_dict.values(),
+                           key=operator.itemgetter('probability'))
+                for level, taxon_dict in formatted_pred_dict.items()}
+
+
+def load_taxonomy(taxonomy_path):
+    """
+    Loads taxonomy JSON file as an OrderedDict to ensure consistent ordering.
+
+    Parameters
+    ----------
+    taxonomy_path : str
+        Path to taxonomy file.
+
+    Returns
+    -------
+    taxonomy : OrderedDict
+        Taxonomy object
+
+    """
+    with open(taxonomy_path, 'r') as f:
+        # Assumption: output encodings levels are enumerated from coarsest
+        # to finest, so we load them with OrderedDicts to ensure consistent
+        # ordering.
+        taxonomy = json.load(f, object_pairs_hook=OrderedDict)
+    return taxonomy
+
+
+def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
+                                   level_threshold_dict=None,
+                                   detection_threshold=0.5):
+    """
+    Obtain the best predicted candidate class for a prediction at all
+    taxonomic levels, enforcing "top-down" hierarchical consistency.
+    That is, starting from the "coarsest" taxonomic level, if the most
+    probable class is considered "present" (estimated probability
+    greater than a threshold), it is considered the best candidate
+    for that level, and only taxonomic children of this class
+    will be considered when choosing candidates for "finer" taxonomic
+    levels. If the most probable class is not considered "present"
+    (estimated probability below the same threshold), then
+    the "other" class is chosen as the best candidate, with the
+    probability assigned to be the complement of the most probable
+    "consistent" class.
+
+    Parameters
+    ----------
+    formatted_pred_dict : dict
+        Formatted dictionary of predictions.
+    taxonomy : dict or None [default: ``None``]
+        Taxonomy JSON object used to apply hierarchical consistency.
+        If ``None``, then ``hierarchical_consistency`` must be ``False``.
+    level_threshold_dict : dict or None [default: ``None``]
+        Optional dictionary of detection thresholds for each
+        taxonomic level.
+    detection_threshold : float [default: ``0.5``]
+        Detection threshold applied uniformly to all classes
+        at all levels. If ``level_threshold_dict`` is provided, this
+        is ignored.
+
+    Returns
+    -------
+    best_candidates_dict : dict
+        Formatted dictionary specifying the best candidate
+        for each taxonomic level.
+
+    """
+    _validate_prediction(formatted_pred_dict, taxonomy)
+
+    # Assumption: "output_encoding" contains hierarchy levels in order from
+    # coarsest to finest
+    taxon_levels = list(taxonomy["output_encoding"].keys())
+
+    # Set thresholds. Note: a threshold of 0.5 corresponds to comparing the
+    # argmax in-vocab class with "other" defined by 1 - max
+    if level_threshold_dict is not None:
+        if set(taxon_levels) != set(level_threshold_dict.keys()):
+            err_msg = f'Levels in level_threshold_dict ' \
+                      f'({tuple(level_threshold_dict.keys())}) ' \
+                      f'do not match taxonomy levels ' \
+                      f'({tuple(taxon_levels)})'
+            raise BirdVoxClassifyError(err_msg)
+        for level, threshold in level_threshold_dict.items():
+            if not (0 < threshold < 1):
+                err_msg = f'Threshold ({threshold}) for level {level} must ' \
+                          f'be in (0, 1)'
+                raise BirdVoxClassifyError(err_msg)
+    else:
+        if not (0 < detection_threshold < 1):
+            err_msg = f'detection_threshold ({detection_threshold}) must ' \
+                      f'be in (0, 1)'
+            raise BirdVoxClassifyError(err_msg)
+        level_threshold_dict = {level: detection_threshold
+                                for level in taxon_levels}
+
+    best_candidate_dict = {}
+    prev_level = None
+    other_reached = False
+    for level_idx, level in enumerate(taxon_levels):
+        other_dict = formatted_pred_dict[level]["other"]
+        # Get maximum in-vocab dict
+        invocab_cand_dict = \
+            max([taxon_dict
+                 for taxon_dict in formatted_pred_dict[level].values()
+                 if 'id' in taxon_dict],
+                key=operator.itemgetter('probability'))
+
+        if not other_reached:
+            if prev_level is not None:
+                # Prev level's candidate assumed not to be "other" here
+                prev_cand_dict = best_candidate_dict[prev_level]
+                # Get most probable "hierarchically consistent" dict
+                hc_cand_dict \
+                    = max([taxon_dict
+                           for taxon_dict in formatted_pred_dict[level].values()
+                           # Make sure not "other"
+                           if 'id' in taxon_dict
+                           # Make sure prev level candidate's leaf ids subsume
+                           # the taxon leaf ids
+                           and set(prev_cand_dict['child_ids']).issuperset(
+                                taxon_dict['child_ids']
+                                if len(taxon_dict['child_ids']) > 0
+                                # Handle leaf case (i.e. no children)
+                                else {taxon_dict['id']})],
+                          key=operator.itemgetter('probability'))
+                # Correct candidate to be hierarchically consistent
+                invocab_cand_dict = hc_cand_dict
+
+            if invocab_cand_dict['probability'] > level_threshold_dict[level]:
+                # If most probable class likelihood is above threshold,
+                # accept it as best candidate
+                best_candidate_dict[level] = invocab_cand_dict
+            else:
+                # Otherwise, use "other" as best candidate
+                best_candidate_dict[level] = dict(other_dict)
+                # Make sure that probability is adjusted to correspond
+                # to candidate in-vocab class
+                best_candidate_dict[level]['probability'] \
+                    = 1 - invocab_cand_dict['probability']
+                other_reached = True
+        else:
+            # If a previous level was already "other", so impose that this level
+            # is also "other"
+            best_candidate_dict[level] = other_dict
+            # The probability is adjusted to the "other" probability from the
+            # previous level
+            best_candidate_dict[level]['probability'] \
+                = best_candidate_dict[taxon_levels[level_idx-1]]['probability']
+
+        prev_level = level
+
+    return best_candidate_dict

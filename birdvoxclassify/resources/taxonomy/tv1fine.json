@@ -3,7 +3,7 @@
     {
       "id": "1",
       "common_name": "Passerine",
-      "scientific_name": "Passeriforme",
+      "scientific_name": "Passeriformes",
       "taxonomy_level_names": "coarse",
       "taxonomy_level_aliases": {},
       "child_ids": [
@@ -26,7 +26,7 @@
     {
       "id": "2",
       "common_name": "Pelecaniforme",
-      "scientific_name": "Pelecaniforme",
+      "scientific_name": "Pelecaniformes",
       "taxonomy_level_names": "coarse",
       "taxonomy_level_aliases": {},
       "child_ids": [

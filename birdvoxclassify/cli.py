@@ -3,9 +3,8 @@ import logging
 import os
 import sys
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
-from collections import Iterable
+from collections.abc import Iterable
 from pprint import pformat
-from six import string_types
 
 import birdvoxclassify
 from birdvoxclassify.core import DEFAULT_MODEL_NAME
@@ -18,7 +17,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 def get_file_list(input_list):
     """Parse list of input paths."""
     if not isinstance(input_list, Iterable)\
-            or isinstance(input_list, string_types):
+            or isinstance(input_list, str):
         raise BirdVoxClassifyError('input_list must be a non-string iterable')
     file_list = []
     for item in input_list:
@@ -37,13 +36,14 @@ def get_file_list(input_list):
 
 
 def run(inputs, output_dir=None, output_summary_path=None,
-        model_name=DEFAULT_MODEL_NAME, batch_size=512, suffix="",
-        logger_level=logging.INFO):
+        model_name=DEFAULT_MODEL_NAME, batch_size=512,
+        select_best_candidates=False, hierarchical_consistency=False,
+        suffix="", logger_level=logging.INFO):
     """Runs classification model on input audio clips"""
     # Set logger level.
     logging.getLogger().setLevel(logger_level)
 
-    if isinstance(inputs, string_types):
+    if isinstance(inputs, str):
         file_list = [inputs]
     elif isinstance(inputs, Iterable):
         file_list = get_file_list(inputs)
@@ -69,6 +69,8 @@ def run(inputs, output_dir=None, output_summary_path=None,
         output_summary_path=output_summary_path,
         model_name=model_name,
         batch_size=batch_size,
+        select_best_candidates=select_best_candidates,
+        hierarchical_consistency=hierarchical_consistency,
         suffix=suffix,
         logger_level=logger_level)
 
@@ -96,6 +98,17 @@ def parse_args(args):
     parser.add_argument(
         '--output-summary-path', '-O', default=None, dest='output_summary_path',
         help='Directory to save individual output file(s)')
+
+    parser.add_argument(
+        '--select-best-candidates', '-B', action='store_true',
+        dest='select_best_candidates',
+        help='Select best candidates instead of '
+             'enumerating all classes in output.')
+
+    parser.add_argument(
+        '--no-hierarchical-consistency', '-N', action='store_false',
+        dest='hierarchical_consistency',
+        help='Do not apply hierarchical consistency when selecting best candidates.')
 
     parser.add_argument(
         '--model-name', '-c', default=DEFAULT_MODEL_NAME,
@@ -157,6 +170,8 @@ def main():
         output_summary_path=args.output_summary_path,
         model_name=args.model_name,
         batch_size=args.batch_size,
+        select_best_candidates=args.select_best_candidates,
+        hierarchical_consistency=args.hierarchical_consistency,
         suffix=args.suffix,
         logger_level=logger_level)
 

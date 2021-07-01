@@ -56,7 +56,7 @@ To install the latest version of BirdVoxClassify from source:
         
 ## Contact
 
-Jason Cramer, New York University (`@jtcramer` on GitHub).
+Aurora Cramer, New York University (`@auroracramer` on GitHub).
 For more information on the BirdVox project, please visit our website: [https://wp.nyu.edu/birdvox](https://wp.nyu.edu/birdvox)
 
 See the [BirdVox Google Group](https://groups.google.com/g/birdvox) for questions and relevant discussion regarding BirdVox research and tools.
