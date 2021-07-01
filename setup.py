@@ -38,7 +38,7 @@ else:
                 print('Downloading weight file {} ...'.format(compressed_file))
                 urlretrieve(base_url + compressed_file, compressed_path)
             print('Decompressing ...')
-            with gzip.open(compressed_path, 'rb') as source:
+            with gzip.open(os.path.realpath(compressed_path), 'rb') as source:
                 with open(weight_path, 'wb') as target:
                     target.write(source.read())
             print('Decompression complete')
