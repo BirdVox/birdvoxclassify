@@ -28,7 +28,7 @@ if len(sys.argv) > 1 and sys.argv[1] == 'sdist':
 else:
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
-    # in all other cases, decompress the weights file if necessary
+    # in all other cases, download and decompress weight files
     for weight_file in weight_files:
         weight_path = os.path.join(model_dir, weight_file)
         if not os.path.isfile(weight_path):
@@ -37,8 +37,18 @@ else:
             if not os.path.isfile(compressed_file):
                 print('Downloading weight file {} ...'.format(compressed_file))
                 urlretrieve(base_url + compressed_file, compressed_path)
+
+            # Handle symlinks
+            if os.path.islink(compressed_path):
+                os.remove(compressed_path)
+                real_compressed_file \
+                    = os.path.basename(os.path.realpath(compressed_path))
+                msg = '{} is symlink, downloading {} ...'
+                print(msg.format(compressed_file, real_compressed_file))
+                urlretrieve(base_url + real_compressed_file, compressed_path)
+
             print('Decompressing ...')
-            with gzip.open(os.path.realpath(compressed_path), 'rb') as source:
+            with gzip.open(compressed_path, 'rb') as source:
                 with open(weight_path, 'wb') as target:
                     target.write(source.read())
             print('Decompression complete')
