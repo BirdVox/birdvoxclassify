@@ -140,7 +140,7 @@ You can specify the classifier model name as follows:
 
 .. code-block:: shell
 
-    $ birdvoxclassify /path/to/file.wav --classifier-name birdvoxclassify-flat-multitask-convnet_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc
+    $ birdvoxclassify /path/to/file.wav --classifier-name birdvoxclassify-flat-multitask-convnet_tv1hierarchical-3c6d869456b2705ea5805b6b7d08f870
 
 If processing a large number of files, you can set the prediction batch size appropriately for your computational
 resources as follows:

@@ -11,8 +11,8 @@ to a subset of bird species. This subset is formalized via a taxonomy file which
 what species we are interested in as well as describing the output of a particular model using the
 taxonomy. In fact, model names refer to the taxonomy they use (as well as the MD5 checksum of the
 taxonomy file) in their filenames. For example, the model with ID
-``birdvoxclassify-flat-multitask-convnet_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc`` uses the taxonomy
-``tv1hierarchical``, which has an MD5 checksum of ``2e7e1bbd434a35b3961e315cfe3832fc``. Generally, a model name
+``birdvoxclassify-flat-multitask-convnet_tv1hierarchical-3c6d869456b2705ea5805b6b7d08f870`` uses the taxonomy
+``tv1hierarchical``, which has an MD5 checksum of ``3c6d869456b2705ea5805b6b7d08f870``. Generally, a model name
 is in the format ``<model identifier>_<taxonomy name>-<taxonomy md5 checksum>``.
 
 

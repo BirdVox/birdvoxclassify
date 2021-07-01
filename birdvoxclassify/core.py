@@ -24,7 +24,7 @@ with warnings.catch_warnings():
 from .birdvoxclassify_exceptions import BirdVoxClassifyError
 
 DEFAULT_MODEL_SUFFIX = "taxonet_tv1hierarchical" \
-                       "-2e7e1bbd434a35b3961e315cfe3832fc"
+                       "-3c6d869456b2705ea5805b6b7d08f870"
 MODEL_PREFIX = 'birdvoxclassify'
 DEFAULT_MODEL_NAME = "{}-{}".format(MODEL_PREFIX, DEFAULT_MODEL_SUFFIX)
 

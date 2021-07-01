@@ -17,7 +17,7 @@ TEST_AUDIO_DIR = os.path.join(os.path.dirname(__file__), 'data/audio')
 CHIRP_PATH = os.path.join(TEST_AUDIO_DIR, 'synth_chirp.wav')
 
 MODEL_SUFFIX = "taxonet_tv1hierarchical" \
-               "-2e7e1bbd434a35b3961e315cfe3832fc"
+               "-3c6d869456b2705ea5805b6b7d08f870"
 MODEL_NAME = "birdvoxclassify-{}".format(MODEL_SUFFIX)
 
 

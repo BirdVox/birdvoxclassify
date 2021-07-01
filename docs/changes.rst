@@ -7,6 +7,7 @@ v0.3.0
 - Add functionality for obtaining best candidates from predictions
 - Add hierarchical consistency implementation for selecting best candidates
 - Drop ``six`` dependency.
+- Update taxonomy files so that order-level taxa are in plural form
 
 v0.2.0
 ~~~~~~
