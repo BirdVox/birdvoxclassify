@@ -745,9 +745,9 @@ def test_get_taxonomy_path():
         os.remove(exp_taxonomy_path)
 
     # Test deprecated taxonomy checksums
-    test_model_name = "test_model_name-2e7e1bbd434a35b3961e315cfe3832fc"
+    test_model_name = "test-model-name_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc"
     pytest.deprecated_call(get_taxonomy_path, test_model_name)
-    test_model_name = "test_model_name-beb9234f0e13a34c7ac41db72e85addd"
+    test_model_name = "test-model-name_tv1fine-beb9234f0e13a34c7ac41db72e85addd"
     pytest.deprecated_call(get_taxonomy_path, test_model_name)
 
 
