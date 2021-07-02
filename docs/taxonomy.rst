@@ -15,6 +15,11 @@ taxonomy file) in their filenames. For example, the model with ID
 ``tv1hierarchical``, which has an MD5 checksum of ``3c6d869456b2705ea5805b6b7d08f870``. Generally, a model name
 is in the format ``<model identifier>_<taxonomy name>-<taxonomy md5 checksum>``.
 
+*v0.3.1 UPDATE: model names with taxonomy md5sum ``2e7e1bbd434a35b3961e315cfe3832fc``
+or ``beb9234f0e13a34c7ac41db72e85addd`` are not available in this version but are restored in v0.3.1 for backwards
+compatibility. They will no longer be supported starting with v0.4. Please use model names with
+taxonomy md5 checksums ``3c6d869456b2705ea5805b6b7d08f870`` and ``2f6efd9017669ef5198e48d8ec7dce4c`` (respectively) instead.*
+
 
 .. _overview:
 

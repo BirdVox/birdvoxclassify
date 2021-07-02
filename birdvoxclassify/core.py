@@ -23,6 +23,7 @@ with warnings.catch_warnings():
 
 from .birdvoxclassify_exceptions import BirdVoxClassifyError
 
+
 DEFAULT_MODEL_SUFFIX = "taxonet_tv1hierarchical" \
                        "-3c6d869456b2705ea5805b6b7d08f870"
 MODEL_PREFIX = 'birdvoxclassify'
@@ -66,7 +67,15 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
         Logger level
     model_name : str [default birdvoxclassify.DEFAULT_MODEL_NAME]
         Name of classifier model. Should be in format
-        ``<model id>_<taxonomy version>-<taxonomy md5sum>``
+        ``<model id>_<taxonomy version>-<taxonomy md5sum>``.
+        *v0.3.1 UPDATE: model names with taxonomy md5sum
+        ``2e7e1bbd434a35b3961e315cfe3832fc`` or
+        ``beb9234f0e13a34c7ac41db72e85addd`` are not available in this version
+        but are restored in v0.3.1 for backwards compatibility. They will no
+        longer be supported starting with v0.4. Please use model names with
+        taxonomy md5 checksums 3c6d869456b2705ea5805b6b7d08f870 and
+        2f6efd9017669ef5198e48d8ec7dce4c (respectively) instead.*
+
 
     Returns
     -------
@@ -648,11 +657,19 @@ def get_model_path(model_name):
     """
     Returns path to the bird species classification model of the given name.
 
+
     Parameters
     ----------
     model_name : str
         Name of classifier model. Should be in format
-        ``<model id>_<taxonomy version>-<taxonomy md5sum>``
+        ``<model id>_<taxonomy version>-<taxonomy md5sum>``.
+        *v0.3.1 UPDATE: model names with taxonomy md5 checksum
+        ``2e7e1bbd434a35b3961e315cfe3832fc`` or
+        ``beb9234f0e13a34c7ac41db72e85addd`` are not available in this version
+        but are restored in v0.3.1 for backwards compatibility. They will no
+        longer be supported starting with v0.4. Please use model names with
+        taxonomy md5 checksums 3c6d869456b2705ea5805b6b7d08f870 and
+        2f6efd9017669ef5198e48d8ec7dce4c (respectively) instead.*
 
     Returns
     -------
@@ -664,6 +681,21 @@ def get_model_path(model_name):
     # Python 3.8 requires a different model for compatibility
     if sys.version_info.major == 3 and sys.version_info.minor == 8:
         model_name = model_name.replace(MODEL_PREFIX, MODEL_PREFIX + '-py3pt8')
+
+    if model_name.endswith("2e7e1bbd434a35b3961e315cfe3832fc"):
+        warnings.warn(f"The version of taxonomy with md5 "
+                      f"checksum 2e7e1bbd434a35b3961e315cfe3832fc has been "
+                      f"deprecated and will be removed in v0.4. Please use "
+                      f"model names with "
+                      f"3c6d869456b2705ea5805b6b7d08f870 instead.",
+                      DeprecationWarning, stacklevel=2)
+    elif model_name.endswith("beb9234f0e13a34c7ac41db72e85addd"):
+        warnings.warn(f"The version of taxonomy with md5 "
+                      f"checksum beb9234f0e13a34c7ac41db72e85addd has been "
+                      f"deprecated and will be removed in v0.4. Please use "
+                      f"model names with "
+                      f"2f6efd9017669ef5198e48d8ec7dce4c instead.",
+                      DeprecationWarning, stacklevel=2)
 
     path = os.path.join(os.path.dirname(__file__),
                         "resources",
@@ -681,7 +713,14 @@ def load_classifier(model_name):
     ----------
     model_name : str
         Name of classifier model. Should be in format
-        ``<model id>_<taxonomy version>-<taxonomy md5sum>``
+        ``<model id>_<taxonomy version>-<taxonomy md5sum>``.
+        *v0.3.1 UPDATE: model names with taxonomy md5 checksum
+        ``2e7e1bbd434a35b3961e315cfe3832fc`` or
+        ``beb9234f0e13a34c7ac41db72e85addd`` are not available in this version
+        but are restored in v0.3.1 for backwards compatibility. They will no
+        longer be supported starting with v0.4. Please use model names with
+        taxonomy md5 checksums 3c6d869456b2705ea5805b6b7d08f870 and
+        2f6efd9017669ef5198e48d8ec7dce4c (respectively) instead.*
 
     Returns
     -------
@@ -724,7 +763,15 @@ def get_taxonomy_path(model_name):
     ----------
     model_name : str
         Name of model. Should be in format
-        `<model id>_<taxonomy version>-<taxonomy md5sum>`
+        `<model id>_<taxonomy version>-<taxonomy md5sum>`.
+        *v0.3.1 UPDATE: model names with taxonomy md5 checksums
+        ``2e7e1bbd434a35b3961e315cfe3832fc`` or
+        ``beb9234f0e13a34c7ac41db72e85addd`` are not available in this version
+        but are restored in v0.3.1 for backwards compatibility. They will no
+        longer be supported starting with v0.4. Please use model names with
+        taxonomy md5 checksums 3c6d869456b2705ea5805b6b7d08f870 and
+        2f6efd9017669ef5198e48d8ec7dce4c (respectively) instead.*
+
 
     Returns
     -------
@@ -734,6 +781,22 @@ def get_taxonomy_path(model_name):
 
     """
     taxonomy_version, exp_md5sum = model_name.split('_')[1].split('-')
+    if taxonomy_version == "tv1hierarchical" \
+            and exp_md5sum == "2e7e1bbd434a35b3961e315cfe3832fc":
+        warnings.warn(f"The version of taxonomy {taxonomy_version} with md5 "
+                      f"checksum {exp_md5sum} has been deprecated and will be "
+                      f"removed in v0.4. Please use model names with "
+                      f"3c6d869456b2705ea5805b6b7d08f870 instead.",
+                      DeprecationWarning, stacklevel=2)
+        taxonomy_version = "tv1deprecatedhierarchical"
+    elif taxonomy_version == "tv1fine" \
+            and exp_md5sum == "beb9234f0e13a34c7ac41db72e85addd":
+        warnings.warn(f"The version of taxonomy {taxonomy_version} with md5 "
+                      f"checksum {exp_md5sum} has been deprecated and will be "
+                      f"removed in v0.4. Please use model names with "
+                      f"2f6efd9017669ef5198e48d8ec7dce4c instead.",
+                      DeprecationWarning, stacklevel=2)
+        taxonomy_version = "tv1deprecatedfine"
     taxonomy_path = os.path.abspath(
                         os.path.join(
                             os.path.dirname(__file__),

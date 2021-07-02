@@ -694,6 +694,12 @@ def test_get_model_path():
     model_path = get_model_path(test_model_name)
     assert os.path.abspath(model_path) == os.path.abspath(exp_model_path)
 
+    # Test deprecated taxonomy checksums
+    test_model_name = "test_model_name-2e7e1bbd434a35b3961e315cfe3832fc"
+    pytest.deprecated_call(get_model_path, test_model_name)
+    test_model_name = "test_model_name-beb9234f0e13a34c7ac41db72e85addd"
+    pytest.deprecated_call(get_model_path, test_model_name)
+
 
 def test_load_classifier():
     classifier = load_classifier(MODEL_NAME)
@@ -737,6 +743,12 @@ def test_get_taxonomy_path():
                       model_name)
     finally:
         os.remove(exp_taxonomy_path)
+
+    # Test deprecated taxonomy checksums
+    test_model_name = "test_model_name-2e7e1bbd434a35b3961e315cfe3832fc"
+    pytest.deprecated_call(get_taxonomy_path, test_model_name)
+    test_model_name = "test_model_name-beb9234f0e13a34c7ac41db72e85addd"
+    pytest.deprecated_call(get_taxonomy_path, test_model_name)
 
 
 def test_validate_batch_pred_list():
