@@ -13,7 +13,7 @@ taxonomy_dir = os.path.join('birdvoxclassify', 'resources', 'taxonomy')
 suffixes = [
     'flat-multitask-convnet-v2_tv1hierarchical-3c6d869456b2705ea5805b6b7d08f870',
     'flat-multitask-convnet-v2_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc',
-    'taxonet_tv1hierarchical-3c6d869456b2705ea5805b6b7d08f870'
+    'taxonet_tv1hierarchical-3c6d869456b2705ea5805b6b7d08f870',
     'taxonet_tv1hierarchical-2e7e1bbd434a35b3961e315cfe3832fc'
 ]
 
