@@ -69,8 +69,8 @@ def process_file(filepaths, output_dir=None, output_summary_path=None,
         Name of classifier model. Should be in format
         ``<model id>_<taxonomy version>-<taxonomy md5sum>``.
         *v0.3.1 UPDATE: model names with taxonomy md5sum
-        ``2e7e1bbd434a35b3961e315cfe3832fc`` or
-        ``beb9234f0e13a34c7ac41db72e85addd`` are not available in this version
+        2e7e1bbd434a35b3961e315cfe3832fc or
+        beb9234f0e13a34c7ac41db72e85addd are not available in this version
         but are restored in v0.3.1 for backwards compatibility. They will no
         longer be supported starting with v0.4. Please use model names with
         taxonomy md5 checksums 3c6d869456b2705ea5805b6b7d08f870 and
@@ -184,6 +184,7 @@ def format_pred(pred_list, taxonomy):
         Prediction dictionary object
 
     """
+    _validate_taxonomy(taxonomy)
     _validate_prediction(pred_list, taxonomy)
     formatted_pred_dict = {}
     encoding_items = taxonomy['output_encoding'].items()
@@ -261,7 +262,7 @@ def _validate_prediction(prediction, taxonomy):
     prediction : list or dict
         Unformatted prediction list or formatted prediction dictionary
         for a single example.
-    taxonomy : dict or None [default: ``None``]
+    taxonomy : dict
         Taxonomy JSON object used to apply hierarchical consistency.
         If ``None``, then ``hierarchical_consistency`` must be ``False``.
 
@@ -286,6 +287,21 @@ def _validate_prediction(prediction, taxonomy):
             raise BirdVoxClassifyError(err_msg.format(
                 n_classes_exp, level, n_classes_est
             ))
+
+
+def _validate_taxonomy(taxonomy):
+    """
+    Perform sanity check on a taxonomy to make sure it is ordered correctly.
+
+    Parameters
+    ----------
+    taxonomy : dict
+        Taxonomy JSON object used to apply hierarchical consistency.
+
+    """
+    if not isinstance(taxonomy["output_encoding"], OrderedDict):
+        raise ValueError('Unordered dictionary found in taxonomy. Please use '
+                         'birdvoxclassify.load_taxonomy to load taxonomy files.')
 
 
 def format_pred_batch(batch_pred_list, taxonomy):
@@ -478,7 +494,7 @@ def compute_pcen(audio, sr, input_format=True):
     # Compute squared magnitude coefficients.
     abs2_stft = (stft.real*stft.real) + (stft.imag*stft.imag)
 
-    # Gather frequency bindon't know if I have as good intuition about the impact of mel frequency bands here, though it is interesting to think of effect of different time-freq front-ends between the BVD and BVC. I guess s according to the Mel scale.
+    # Gather frequency bins
     # NB: as of librosa v0.6.2, melspectrogram is type-instable and thus
     # returns 64-bit output even with a 32-bit input. Therefore, we need
     # to convert PCEN to single precision eventually. This might not be
@@ -664,8 +680,8 @@ def get_model_path(model_name):
         Name of classifier model. Should be in format
         ``<model id>_<taxonomy version>-<taxonomy md5sum>``.
         *v0.3.1 UPDATE: model names with taxonomy md5 checksum
-        ``2e7e1bbd434a35b3961e315cfe3832fc`` or
-        ``beb9234f0e13a34c7ac41db72e85addd`` are not available in this version
+        2e7e1bbd434a35b3961e315cfe3832fc or
+        beb9234f0e13a34c7ac41db72e85addd are not available in this version
         but are restored in v0.3.1 for backwards compatibility. They will no
         longer be supported starting with v0.4. Please use model names with
         taxonomy md5 checksums 3c6d869456b2705ea5805b6b7d08f870 and
@@ -715,8 +731,8 @@ def load_classifier(model_name):
         Name of classifier model. Should be in format
         ``<model id>_<taxonomy version>-<taxonomy md5sum>``.
         *v0.3.1 UPDATE: model names with taxonomy md5 checksum
-        ``2e7e1bbd434a35b3961e315cfe3832fc`` or
-        ``beb9234f0e13a34c7ac41db72e85addd`` are not available in this version
+        2e7e1bbd434a35b3961e315cfe3832fc or
+        beb9234f0e13a34c7ac41db72e85addd are not available in this version
         but are restored in v0.3.1 for backwards compatibility. They will no
         longer be supported starting with v0.4. Please use model names with
         taxonomy md5 checksums 3c6d869456b2705ea5805b6b7d08f870 and
@@ -765,8 +781,8 @@ def get_taxonomy_path(model_name):
         Name of model. Should be in format
         `<model id>_<taxonomy version>-<taxonomy md5sum>`.
         *v0.3.1 UPDATE: model names with taxonomy md5 checksums
-        ``2e7e1bbd434a35b3961e315cfe3832fc`` or
-        ``beb9234f0e13a34c7ac41db72e85addd`` are not available in this version
+        2e7e1bbd434a35b3961e315cfe3832fc or
+        beb9234f0e13a34c7ac41db72e85addd are not available in this version
         but are restored in v0.3.1 for backwards compatibility. They will no
         longer be supported starting with v0.4. Please use model names with
         taxonomy md5 checksums 3c6d869456b2705ea5805b6b7d08f870 and
@@ -940,6 +956,10 @@ def get_best_candidates(pred_list=None, formatted_pred_dict=None, taxonomy=None,
 def load_taxonomy(taxonomy_path):
     """
     Loads taxonomy JSON file as an OrderedDict to ensure consistent ordering.
+    Taxonomy files specify output encodings in order from coarse to fine
+    by convention.
+
+    *Please use this function instead of manually loading the taxonomy!*
 
     Parameters
     ----------
@@ -957,6 +977,7 @@ def load_taxonomy(taxonomy_path):
         # to finest, so we load them with OrderedDicts to ensure consistent
         # ordering.
         taxonomy = json.load(f, object_pairs_hook=OrderedDict)
+    _validate_taxonomy(taxonomy)
     return taxonomy
 
 
@@ -999,6 +1020,7 @@ def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
         for each taxonomic level.
 
     """
+    _validate_taxonomy(taxonomy)
     _validate_prediction(formatted_pred_dict, taxonomy)
 
     # Assumption: "output_encoding" contains hierarchy levels in order from
@@ -1058,12 +1080,12 @@ def apply_hierarchical_consistency(formatted_pred_dict, taxonomy,
                                 else {taxon_dict['id']})],
                           key=operator.itemgetter('probability'))
                 # Correct candidate to be hierarchically consistent
-                invocab_cand_dict = hc_cand_dict
+                invocab_cand_dict = dict(hc_cand_dict)
 
             if invocab_cand_dict['probability'] > level_threshold_dict[level]:
                 # If most probable class likelihood is above threshold,
                 # accept it as best candidate
-                best_candidate_dict[level] = invocab_cand_dict
+                best_candidate_dict[level] = dict(invocab_cand_dict)
             else:
                 # Otherwise, use "other" as best candidate
                 best_candidate_dict[level] = dict(other_dict)

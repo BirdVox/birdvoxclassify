@@ -14,8 +14,7 @@ from numbers import Real
 
 from birdvoxclassify import *
 from birdvoxclassify.core import apply_hierarchical_consistency, \
-                                 _validate_prediction, \
-                                 _validate_batch_pred_list
+    _validate_prediction, _validate_batch_pred_list, _validate_taxonomy
 from birdvoxclassify.birdvoxclassify_exceptions import BirdVoxClassifyError
 
 PROJECT_DIR = os.path.join(os.path.dirname(__file__), "..")
@@ -980,6 +979,9 @@ def test_get_best_candidates():
                   formatted_pred_dict=formatted_pred_dict, taxonomy=None)
     pytest.raises(BirdVoxClassifyError, get_best_candidates,
                   pred_list=pred_list, taxonomy=None)
+    pytest.raises(BirdVoxClassifyError, get_best_candidates,
+                  hierarchical_consistency=False,
+                  pred_list=pred_list, taxonomy=None)
 
     # Make sure a real prediction makes it through the pipeline with no problem
     output = process_file(CHIRP_PATH, model_name=MODEL_NAME)
@@ -988,6 +990,14 @@ def test_get_best_candidates():
                                hierarchical_consistency=False)
     out2 = get_best_candidates(formatted_pred_dict=formatted_pred_dict,
                                taxonomy=taxonomy)
+
+
+def test_validate_taxonomy():
+    taxonomy = load_taxonomy(TAXV1_HIERARCHICAL_PATH)
+    _validate_taxonomy(taxonomy)
+    with open(TAXV1_HIERARCHICAL_PATH, 'r') as f:
+        taxonomy2 = json.load(f)
+    pytest.raises(ValueError, _validate_taxonomy, taxonomy2)
 
 
 def test_apply_hierarchial_consistency():

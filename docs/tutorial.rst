@@ -74,6 +74,8 @@ You can also compute predictions directly on loaded audio arrays:
     # Load model and taxonomy
     model = bvc.load_classifier(bvc.DEFAULT_MODEL_NAME)
     taxonomy_path = bvc.get_taxonomy_path(bvc.DEFAULT_MODEL_NAME)
+    # IMPORTANT: Use this utility instead of loading it manually to ensure
+    #            proper behavior
     taxonomy = bvc.load_taxonomy(taxonomy_path)
 
     # Get list of one-hot prediction array for each level of the taxonomy
