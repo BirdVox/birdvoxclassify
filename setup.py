@@ -115,7 +115,7 @@ setup(
         'librosa>=0.6.2',
         'numpy>=1.13.0',
         'scipy>=1.0.0',
-        'PySoundFile>=0.9.0',
+        'SoundFile>=0.9.0',
         'resampy>=0.2.0',
         'h5py>=2.7.0',
         'pandas>=0.23',

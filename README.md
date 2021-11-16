@@ -23,7 +23,7 @@ Dependencies
 Currently, we support Python 3.6, 3.7, and 3.8.
 
 #### libsndfile (Linux only)
-BirdVoxClassify depends on the PySoundFile module to load audio files, which itself depends on the non-Python library libsndfile.
+BirdVoxClassify depends on the SoundFile module to load audio files, which itself depends on the non-Python library libsndfile.
 On Windows and Mac OS X, these will be installed automatically via the ``pip`` package manager and you can therefore skip this step.
 However, on Linux, `libsndfile` must be installed manually via your platform's package manager.
 For Debian-based distributions (such as Ubuntu), this can be done by simply running
@@ -31,7 +31,7 @@ For Debian-based distributions (such as Ubuntu), this can be done by simply runn
     apt-get install libsndfile
 
 For more detailed information, please consult the
-[installation instructions of pysoundfile](https://pysoundfile.readthedocs.io/en/0.9.0/#installation>).
+[installation instructions of soundfile](https://pysoundfile.readthedocs.io/en/latest/#installation>).
 
 #### Note about TensorFlow:
 We have dropped support for Tensorflow 1.x, and have moved to Tensorflow 2.x.

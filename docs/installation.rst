@@ -3,9 +3,6 @@ Installation instructions
 
 Dependencies
 ------------
-Python Versions
-^^^^^^^^^^^^^^^
-Currently, we support Python 3.6 and Python 3.7. Python 3.8 is not currently supported since TensorFlow 1.x is not supported for Python 3.8.
 
 Python Versions
 ^^^^^^^^^^^^^^^
@@ -14,7 +11,7 @@ Currently, we support Python 3.6, 3.7, and 3.8.
 libsndfile (Linux only)
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-BirdVoxClassify depends on the PySoundFile module to load audio files,
+BirdVoxClassify depends on the SoundFile module to load audio files,
 which itself depends on the non-Python library libsndfile. On Windows
 and Mac OS X, these will be installed automatically via the ``pip``
 package manager and you can therefore skip this step. However, on Linux,
@@ -27,7 +24,7 @@ done by simply running
    apt-get install libsndfile
 
 For more detailed information, please consult the `installation
-instructions of pysoundfile`_.
+instructions of soundfile`_.
 
 
 Note about TensorFlow:
@@ -62,5 +59,5 @@ To install the latest version of BirdVoxClassify from source:
        cd birdvoxclassify
        pip install -e .
 
-.. _installation instructions of pysoundfile: https://pysoundfile.readthedocs.io/en/0.9.0/#installation%3E
+.. _installation instructions of soundfile: https://pysoundfile.readthedocs.io/en/latest/#installation
 .. _BirdVoxDetect: https://github.com/BirdVox/birdvoxdetect
