@@ -117,9 +117,8 @@ setup(
         'pandas>=0.23',
         'h5py>=2.7.0',
         'SoundFile>=0.9.0',
-        'tensorflow>=2.0.0'
+        'tensorflow>=2.0.0',
         'librosa>=0.6.2',
-        'resampy>=0.2.0',
     ],
     extras_require={
         'docs': [
