@@ -49,7 +49,7 @@ else:
                     # Handle symlinks
                     with open(compressed_path) as symlink:
                         # Github raw stores symlinks as text files, so we need
-                        # to read it to check the text 
+                        # to read it to check the text
                         real_compressed_file = symlink.read()
                     os.remove(compressed_path)
                     msg = '{} is symlink, downloading {} ...'
@@ -117,7 +117,7 @@ setup(
         'scipy>=1.0.0',
         'PySoundFile>=0.9.0',
         'resampy>=0.2.0',
-        'h5py>=2.7.0,<3.0.0',
+        'h5py>=2.7.0',
         'pandas>=0.23',
         'tensorflow>=2.0.0'
     ],
